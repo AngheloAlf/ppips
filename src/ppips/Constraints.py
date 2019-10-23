@@ -1,14 +1,13 @@
 #!/usr/bin/python3
 
+from __future__ import annotations
+
 from typing import overload, Dict
 
 from .IntVariable import IntVar
 from .MultiVar import MultiVar
 from .VarsComparison import VarsComparison
 from .Optimize import Optimize, Maximize, Minimize
-
-class Constraints:
-    pass
 
 class Constraints:
     def __init__(self):
@@ -20,7 +19,7 @@ class Constraints:
             rest += f"\n\t{str(i)}"
         return rest
     
-    def __iadd__(self, other:VarsComparison) -> Constraints:
+    def __iadd__(self, other: VarsComparison) -> Constraints:
         if isinstance(other, VarsComparison):
             self.constr.append(other)
             return self
@@ -29,7 +28,6 @@ class Constraints:
     def evaluate(self, vars_dict) -> bool:
         for i in self.constr:
             evaluation = i(vars_dict)
-            # print("\t", evaluation)
             if not evaluation:
                 return False
         return True

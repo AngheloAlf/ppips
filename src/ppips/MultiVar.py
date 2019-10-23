@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
+from __future__ import annotations
+
 from .VarsComparison import VarsComparison, ComparableElement
 
 class MultiVar(ComparableElement):
-    def __init__(self, simbol:str, /, var_list:list=None, first=None, second=None, parenthesis=True):
+    def __init__(self, simbol: str, /, var_list: list=None, first=None, second=None, parenthesis=True):
         self.simbol = simbol
         self.parenthesis = parenthesis
         if first is not None and second is not None:
@@ -34,6 +36,10 @@ class MultiVar(ComparableElement):
 
     def __str__(self):
         return f"<{self.__class__.__name__}: {self.get_expr(True)}>"
+    
+    def evaluate(self, vars_dict:dict) -> int:
+        raise RuntimeError("This class should not be instanciated.")
+        return 0
     
     def __call__(self, vars_dict:dict) -> int:
         return self.evaluate(vars_dict)

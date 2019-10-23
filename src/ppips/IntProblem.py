@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
-from typing import overload, List, Tuple, Dict, TypeVar
+from __future__ import annotations
 
-none_int = TypeVar("none_int", None, int)
+from typing import overload, List, Tuple, Dict, Union
 
 from .IntVariable import IntVar, IntVarContainer
 from .MultiVar import MultiVar
@@ -11,11 +11,11 @@ from .Constraints import Constraints
 from .Optimize import Optimize, Maximize, Minimize
 
 class IntProblem:
-    def __init__(self, name:str, vars:List[IntVar]):
+    def __init__(self, name: str, vars: List[IntVar]):
         self.name = name
         self.vars = list(vars)
         self.constraint = Constraints()
-        self.objective = None
+        self.objective: Union[Optimize, None] = None
 
     def get_expr(self) -> str:
         return self.name
@@ -27,28 +27,13 @@ class IntProblem:
 
         return f"<{self.__class__.__name__}: {self.get_expr()!r}>{obje}\n\n\t{rest}\n\n\t{vars_}\n"
 
-    def __iadd__(self, other: VarsComparison):
+    def __iadd__(self, other: VarsComparison) -> IntProblem:
         if isinstance(other, VarsComparison):
             self.constraint += other
             return self
         return NotImplemented
 
-    @overload
-    def __ilshift__(self, other: IntVar): ...
-    def __ilshift__(self, other: MultiVar):
-        if isinstance(other, MultiVar):
-            if self.objective is not None:
-                print("Warning: this problem already has an objective function. Changing to the new one.")
-            self.objective = other
-            return self
-        elif isinstance(other, IntVar):
-            if self.objective is not None:
-                print("Warning: this problem already has an objective function. Changing to the new one.")
-            self.objective = other
-            return self
-        return NotImplemented
-
-    def __imatmul__(self, other: Optimize):
+    def __imatmul__(self, other: Optimize) -> IntProblem:
         if isinstance(other, Optimize):
             if self.objective is not None:
                 print("Warning: this problem already has an objective function. Changing to the new one.")
@@ -56,9 +41,7 @@ class IntProblem:
             return self
         return NotImplemented
 
-    @overload
-    def evaluate(self, vars_dict:Dict[str, int]) -> Tuple[bool, none_int]: ...
-    def evaluate(self, vars_dict:Dict[IntVar, int]) -> Tuple[bool, none_int]:
+    def evaluate(self, vars_dict:Dict[Union[IntVar, str], int]) -> Tuple[bool, Union[Number, None]]:
         valid = self.constraint(vars_dict)
         if not valid:
             return (False, None)
@@ -66,7 +49,7 @@ class IntProblem:
             return (True, self.objective(vars_dict))
         return (True, None)
 
-    def solve(self, solutions_type:str="all") -> List[Dict[IntVar, int]]:
+    def solve(self, solutions_type:str="all") -> List[Dict[Union[IntVar, str], Number]]:
         # first
         # optimal
         # all
@@ -123,3 +106,5 @@ class IntProblem:
 
 
         return solutions
+
+Number = Union[int, float]

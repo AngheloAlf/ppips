@@ -7,12 +7,14 @@ if __name__ == "__main__":
     y = IntVar("y", range(1,5))
     z = IntVar("z", range(3))
 
-    asdf = x+y-(x/y)*x
+    # """
+    asdf = x+y-(x/y)*x + 3
     print(asdf)
     print(asdf({x:2, y:4, z:2}))
+    # """
+
 
     """
-
     problem = IntProblem("Example", [x, y, z])
 
     # funcion objetivo
@@ -20,7 +22,7 @@ if __name__ == "__main__":
 
     # restricciones
     problem += x + y - z < 3
-    problem += x+y > 1
+    problem += x+y + 1 > 2
     problem += z == 1
 
     print(problem)
