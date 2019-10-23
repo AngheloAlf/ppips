@@ -194,6 +194,7 @@ class IntVarAdds(MultiVar):
                 result += var(vars_dict)
         return result
 
+
     @overload
     def __add__(self, other: IntVar) -> IntVarAdds: ...
     @overload
@@ -215,24 +216,9 @@ class IntVarAdds(MultiVar):
             return IntVarAdds(var_list=self.elements+[other])
         return NotImplemented
 
-    @overload
-    def __radd__(self, other: IntVar) -> IntVarAdds: ...
-    @overload
-    def __radd__(self, other: IntVarAdds) -> IntVarAdds: ...
-    @overload
-    def __radd__(self, other: IntVarMult) -> IntVarAdds: ...
-    @overload
-    def __radd__(self, other: int) -> IntVarAdds: ...
+
     def __radd__(self, other):
-        if isinstance(other, IntVar):
-            return IntVarAdds(var_list=[other]+self.elements)
-        elif type(other) == int:
-            return IntVarAdds(var_list=[other]+self.elements)
-        elif isinstance(other, IntVarAdds):
-            return IntVarAdds(var_list=other.elements+self.elements)
-        elif isinstance(other, IntVarMult):
-            return IntVarAdds(var_list=[other]+self.elements)
-        elif isinstance(other, IntVarDiv):
+        if isinstance(other, (IntVar, int, float)):
             return IntVarAdds(var_list=[other]+self.elements)
         return NotImplemented
 
@@ -258,24 +244,8 @@ class IntVarAdds(MultiVar):
             return IntVarAdds(var_list=self.elements+[-other])
         return NotImplemented
 
-    @overload
-    def __rsub__(self, other: IntVar) -> IntVarAdds: ...
-    @overload
-    def __rsub__(self, other: IntVarAdds) -> IntVarAdds: ...
-    @overload
-    def __rsub__(self, other: IntVarMult) -> IntVarAdds: ...
-    @overload
-    def __rsub__(self, other: int) -> IntVarAdds: ...
     def __rsub__(self, other):
-        if isinstance(other, IntVar):
-            return IntVarAdds(first=other, second=-self)
-        elif type(other) == int:
-            return IntVarAdds(first=other, second=-self)
-        elif isinstance(other, IntVarAdds):
-            return IntVarAdds(first=other, second=-self)
-        elif isinstance(other, IntVarMult):
-            return IntVarAdds(first=other, second=-self)
-        elif isinstance(other, IntVarDiv):
+        if isinstance(other, (IntVar, int, float)):
             return IntVarAdds(first=other, second=-self)
         return NotImplemented
 
@@ -301,24 +271,8 @@ class IntVarAdds(MultiVar):
             return IntVarMult(first=self, second=other)
         return NotImplemented
 
-    @overload
-    def __rmul__(self, other: IntVar) -> IntVarMult: ...
-    @overload
-    def __rmul__(self, other: IntVarMult) -> IntVarMult: ...
-    @overload
-    def __rmul__(self, other: IntVarAdds) -> IntVarMult: ...
-    @overload
-    def __rmul__(self, other: int) -> IntVarMult: ...
     def __rmul__(self, other):
-        if isinstance(other, IntVar):
-            return IntVarMult(first=other, second=self)
-        elif type(other) == int:
-            return IntVarMult(first=other, second=self)
-        elif isinstance(other, IntVarAdds):
-            return IntVarMult(first=other, second=self)
-        elif isinstance(other, IntVarMult):
-            return IntVarMult(first=other, second=self)
-        elif isinstance(other, IntVarDiv):
+        if isinstance(other, (IntVar, int, float)):
             return IntVarMult(first=other, second=self)
         return NotImplemented
 
@@ -337,17 +291,10 @@ class IntVarAdds(MultiVar):
         return NotImplemented
 
     def __rtruediv__(self, other):
-        if isinstance(other, IntVar):
-            return IntVarDiv(first=other, second=self)
-        elif type(other) == int:
-            return IntVarDiv(first=other, second=self)
-        elif isinstance(other, IntVarAdds):
-            return IntVarDiv(first=other, second=self)
-        elif isinstance(other, IntVarMult):
-            return IntVarDiv(first=other, second=self)
-        elif isinstance(other, IntVarDiv):
+        if isinstance(other, (IntVar, int, float)):
             return IntVarDiv(first=other, second=self)
         return NotImplemented
+
 
     def __neg__(self) -> IntVarMult:
         return IntVarMult(first=-1, second=self)
@@ -367,6 +314,7 @@ class IntVarMult(MultiVar):
             else:
                 result *= var(vars_dict)
         return result
+
 
     @overload
     def __mul__(self, other: IntVar) -> IntVarMult: ...
@@ -389,25 +337,9 @@ class IntVarMult(MultiVar):
             return IntVarMult(first=self, second=other)
         return NotImplemented
 
-    @overload
-    def __rmul__(self, other: IntVar) -> IntVarMult: ...
-    @overload
-    def __rmul__(self, other: IntVarMult) -> IntVarMult: ...
-    @overload
-    def __rmul__(self, other: IntVarAdds) -> IntVarMult: ...
-    @overload
-    def __rmul__(self, other: int) -> IntVarMult: ...
     def __rmul__(self, other):
-        if isinstance(other, IntVar):
+        if isinstance(other, (IntVar, int, float)):
             return IntVarMult(var_list=[other]+self.elements)
-        elif type(other) == int:
-            return IntVarMult(var_list=[other]+self.elements)
-        elif isinstance(other, IntVarAdds):
-            return IntVarMult(fist=other, second=self.elements)
-        elif isinstance(other, IntVarMult):
-            return IntVarMult(var_list=other.elements+self.elements)
-        elif isinstance(other, IntVarDiv):
-            return IntVarMult(first=other, second=self)
         return NotImplemented
 
 
@@ -432,24 +364,8 @@ class IntVarMult(MultiVar):
             return IntVarAdds(first=self, second=other)
         return NotImplemented
 
-    @overload
-    def __radd__(self, other: IntVar) -> IntVarAdds: ...
-    @overload
-    def __radd__(self, other: IntVarAdds) -> IntVarAdds: ...
-    @overload
-    def __radd__(self, other: IntVarMult) -> IntVarAdds: ...
-    @overload
-    def __radd__(self, other: int) -> IntVarAdds: ...
     def __radd__(self, other):
-        if isinstance(other, IntVar):
-            return IntVarAdds(first=other, second=self)
-        elif type(other) == int:
-            return IntVarAdds(first=other, second=self)
-        elif isinstance(other, IntVarAdds):
-            return IntVarAdds(first=other, second=self)
-        elif isinstance(other, IntVarMult):
-            return IntVarAdds(first=other, second=self)
-        elif isinstance(other, IntVarDiv):
+        if isinstance(other, (IntVar, int, float)):
             return IntVarAdds(first=other, second=self)
         return NotImplemented
 
@@ -475,24 +391,8 @@ class IntVarMult(MultiVar):
             return IntVarAdds(first=self, second=-other)
         return NotImplemented
 
-    @overload
-    def __rsub__(self, other: IntVar) -> IntVarAdds: ...
-    @overload
-    def __rsub__(self, other: IntVarAdds) -> IntVarAdds: ...
-    @overload
-    def __rsub__(self, other: IntVarMult) -> IntVarAdds: ...
-    @overload
-    def __rsub__(self, other: int) -> IntVarAdds: ...
     def __rsub__(self, other):
-        if isinstance(other, IntVar):
-            return IntVarAdds(first=other, second=-self)
-        elif type(other) == int:
-            return IntVarAdds(first=other, second=-self)
-        elif isinstance(other, IntVarAdds):
-            return IntVarAdds(first=other, second=-self)
-        elif isinstance(other, IntVarMult):
-            return IntVarAdds(first=other, second=-self)
-        elif isinstance(other, IntVarMult):
+        if isinstance(other, (IntVar, int, float)):
             return IntVarAdds(first=other, second=-self)
         return NotImplemented
 
@@ -511,15 +411,7 @@ class IntVarMult(MultiVar):
         return NotImplemented
 
     def __rtruediv__(self, other):
-        if isinstance(other, IntVar):
-            return IntVarDiv(first=other, second=self)
-        elif type(other) == int:
-            return IntVarDiv(first=other, second=self)
-        elif isinstance(other, IntVarAdds):
-            return IntVarDiv(first=other, second=self)
-        elif isinstance(other, IntVarMult):
-            return IntVarDiv(first=other, second=self)
-        elif isinstance(other, IntVarDiv):
+        if isinstance(other, (IntVar, int, float)):
             return IntVarDiv(first=other, second=self)
         return NotImplemented
 
@@ -549,6 +441,7 @@ class IntVarDiv(MultiVar):
                 result /= var(vars_dict)
         return result
 
+
     def __add__(self, other):
         if isinstance(other, IntVar):
             return IntVarAdds(first=self, second=other)
@@ -561,6 +454,12 @@ class IntVarDiv(MultiVar):
         elif isinstance(other, IntVarAdds):
             return IntVarAdds(first=self, second=other)
         return NotImplemented
+
+    def __radd__(self, other):
+        if isinstance(other, (IntVar, int, float)):
+            return IntVarAdds(first=other, second=self)
+        return NotImplemented
+
 
     def __sub__(self, other):
         if isinstance(other, IntVar):
@@ -575,6 +474,12 @@ class IntVarDiv(MultiVar):
             return IntVarAdds(first=self, second=-other)
         return NotImplemented
 
+    def __rsub__(self, other):
+        if isinstance(other, (IntVar, int, float)):
+            return IntVarAdds(first=other, second=-self)
+        return NotImplemented
+
+
     def __mul__(self, other):
         if isinstance(other, IntVar):
             return IntVarMult(first=self, second=other)
@@ -587,6 +492,12 @@ class IntVarDiv(MultiVar):
         elif isinstance(other, IntVarAdds):
             return IntVarMult(first=self, second=other)
         return NotImplemented
+
+    def __rmul__(self, other):
+        if isinstance(other, (IntVar, int, float)):
+            return IntVarMult(first=other, second=self)
+        return NotImplemented
+
 
     def __truediv__(self, other):
         if isinstance(other, IntVar):
@@ -602,15 +513,7 @@ class IntVarDiv(MultiVar):
         return NotImplemented
 
     def __rtruediv__(self, other):
-        if isinstance(other, IntVar):
-            return IntVarDiv(first=other, second=self)
-        elif type(other) == int:
-            return IntVarDiv(first=other, second=self)
-        elif isinstance(other, IntVarDiv):
-            return IntVarDiv(first=other, second=self)
-        elif isinstance(other, IntVarMult):
-            return IntVarDiv(first=other, second=self)
-        elif isinstance(other, IntVarAdds):
+        if isinstance(other, (IntVar, int, float)):
             return IntVarDiv(first=other, second=self)
         return NotImplemented
     
