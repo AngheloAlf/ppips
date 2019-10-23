@@ -3,9 +3,15 @@
 from ppips import IntVar, IntProblem, Maximize, Minimize
 
 if __name__ == "__main__":
-    x = IntVar("x", range(3))
-    y = IntVar("y", range(1,4))
-    z = IntVar("z", range(2))
+    x = IntVar("x", range(4))
+    y = IntVar("y", range(1,5))
+    z = IntVar("z", range(3))
+
+    asdf = x+y-(x/y)*x
+    print(asdf)
+    print(asdf({x:2, y:4, z:2}))
+
+    """
 
     problem = IntProblem("Example", [x, y, z])
 
@@ -18,14 +24,15 @@ if __name__ == "__main__":
     problem += z == 1
 
     print(problem)
-    solutions = problem.solve("optimal")
-    # print(solutions)
+    solutions = problem.solve("all")
+    print(len(solutions))
     for value in solutions:
-        print([(k.get_expr(),v) for k, v in value.items()], problem.evaluate(value))
+        print([(k.get_expr(),v) for k, v in value.items()], problem.evaluate(value)[1])
 
     # print(problem.evaluate(solutions[0])[1])
     # print(problem.evaluate({x:1, y:2, z:1}))
 
+    """
 
     """
     print()

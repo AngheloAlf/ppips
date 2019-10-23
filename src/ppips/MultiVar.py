@@ -23,7 +23,7 @@ class MultiVar(ComparableElement):
     def get_expr(self, disable_last_parenthesis=False) -> str:
         result = []
         for i in self.elements:
-            if type(i) == int:
+            if type(i) in (int, float):
                 result.append(str(i))
             else:
                 result.append(i.get_expr())
