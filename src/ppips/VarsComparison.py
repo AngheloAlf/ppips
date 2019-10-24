@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Union
+
 class VarsComparison:
     def __init__(self, left, right, comp_type: str) -> None:
         self.left = left
@@ -23,7 +25,7 @@ class VarsComparison:
         
         return f"<{self.__class__.__name__}: {left} {self.comp_type} {right} >"
 
-    def evaluate(self, vars_dict) -> bool:
+    def evaluate(self, vars_dict) -> Union[bool, VarsComparison]:
         if isinstance(self.left, (int, float)):
             left = self.left
         else:
@@ -49,7 +51,7 @@ class VarsComparison:
         else:
             raise RuntimeError()
 
-    def __call__(self, vars_dict) -> bool:
+    def __call__(self, vars_dict) -> Union[bool, VarsComparison]:
         return self.evaluate(vars_dict)
 
     def __bool__(self) -> bool:

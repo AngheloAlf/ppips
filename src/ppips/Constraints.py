@@ -9,6 +9,10 @@ from .MultiVar import MultiVar
 from .VarsComparison import VarsComparison
 from .Optimize import Optimize, Maximize, Minimize
 
+Number = Union[int, float]
+Element = Union[IntVar, Number]
+ElementDict = Dict[Union[IntVar, str], Number]
+
 class Constraints:
     def __init__(self) -> None:
         self.constr: List[VarsComparison] = list()
@@ -35,15 +39,21 @@ class Constraints:
             return self
         return NotImplemented
     
-    def evaluate(self, vars_dict) -> bool:
+    def evaluate(self, vars_dict: ElementDict) -> bool:
         for i in self.constr:
             evaluation = i(vars_dict)
             if isinstance(evaluation, bool) and not evaluation:
                 return False
         return True
 
-    def __call__(self, vars_dict) -> bool:
+    def __call__(self, vars_dict: ElementDict) -> bool:
         return self.evaluate(vars_dict)
+
+    def update_constraints(self, vars_dict: ElementDict) -> None:
+        updated = list()
+        for i in self.constr:
+            updated.append(i(vars_dict))
+        self.constr = updated
 
     def __iter__(self):
         for i in self.constr:

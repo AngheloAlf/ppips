@@ -13,7 +13,7 @@ ElementDict = Dict[Union[IntVar, str], Number]
 
 class Optimize:
     def __init__(self, objective: Union[IntVar, MultiVar]) -> None:
-        if not isinstance(objective, IntVar) and not isinstance(objective, MultiVar):
+        if not isinstance(objective, (IntVar, MultiVar)):
             raise TypeError("Expected valid expression.")
         self.objective = objective
 
@@ -21,7 +21,14 @@ class Optimize:
         return f"<{self.__class__.__name__}: {self.objective.get_expr(True)} >"
     
     def __call__(self, vars_dict: ElementDict) -> Union[Element, MultiVar]:
-        return self.objective(vars_dict)
+        if isinstance(self.objective, (IntVar, MultiVar)):
+            return self.objective(vars_dict)
+        return self.objective
+    
+    def update(self, vars_dict: ElementDict) -> None:
+        if isinstance(self.objective, (IntVar, MultiVar)):
+            self.objective = self.objective(vars_dict)
+
 
 
 class Minimize(Optimize):

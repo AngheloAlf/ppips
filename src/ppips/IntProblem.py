@@ -20,6 +20,7 @@ class IntProblem:
         self.vars = list(vars)
         self.constraints = Constraints()
         self.objective: Union[Optimize, None] = None
+        self.removed_vars: Dict[IntVar, Number] = dict()
 
     def get_expr(self) -> str:
         return self.name
@@ -76,14 +77,17 @@ class IntProblem:
         for i in self.constraints:
             constr_vars = i.get_vars()
             if len(constr_vars) == 1:
-                if self._node_consistency_(list(constr_vars)[0], i):
-                    # var only has 1 posible value
-                    # -> remove var from problem
-                    # -> update constraints (instance this var as it's only value)
-                    # -> update objective
-                    pass
+                var = list(constr_vars)[0]
+                if self._node_consistency_(var, i):
+                    var_value = list(var.get_domain())[0]
+                    self.removed_vars[var] = var_value
+                    self.vars.remove(var)
                 removed_constr.append(i)
         self.constraints -= removed_constr
+        if len(removed_constr) > 0:
+            self.constraints.update_constraints(self.removed_vars)
+            self.objective.update(self.removed_vars)
+
 
     def solve(self, solutions_type: str="all") -> List[ElementDict]:
         # first
@@ -144,4 +148,5 @@ class IntProblem:
             elif isinstance(self.objective, Minimize):
                 solutions.sort(key=lambda x: self.evaluate(x)[1])
 
+        solutions = [{**x, **self.removed_vars} for x in solutions]
         return solutions
