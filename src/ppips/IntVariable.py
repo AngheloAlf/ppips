@@ -9,6 +9,7 @@ from .MultiVar import MultiVar
 
 # https://docs.python.org/3/reference/datamodel.html
 
+Number = Union[int, float]
 
 class ArithmeticVar:
     def __add__(self, other: ArithElement) -> IntVarAdds:
@@ -63,6 +64,17 @@ class ArithmeticVar:
     def __rpow__(self, other: Element) -> IntVarPow:
         if isinstance(other, (IntVar, int, float)):
             return IntVarPow(first=other, second=self)
+        return NotImplemented
+
+
+    def __mod__(self, other: Element) -> IntVarPow:
+        if isinstance(other, (IntVar, int, float, MultiVar)):
+            return IntVarMod(first=self, second=other)
+        return NotImplemented
+
+    def __rmod__(self, other: Element) -> IntVarPow:
+        if isinstance(other, (IntVar, int, float)):
+            return IntVarMod(first=other, second=self)
         return NotImplemented
 
 
@@ -235,6 +247,25 @@ class IntVarPow(MultiVar, ArithmeticVar):
         return result
 
 
+class IntVarMod(MultiVar, ArithmeticVar):
+    def __init__(self, /, var_list: list=None, first=None, second=None) -> None:
+        super().__init__("%", var_list=var_list, first=first, second=second)
+
+    def evaluate(self, vars_dict: ElementDict) -> ArithElement:
+        result: Number = 1
+        var = self.elements[0]
+        if isinstance(var, (int, float)):
+            result = var
+        else:
+            result = var(vars_dict)
+        for var in self.elements[1:]:
+            if isinstance(var, (int, float)):
+                result = result % var
+            else:
+                result = result % var(vars_dict)
+        return result
+
+
 class IntVarContainer:
     def __init__(self, var: IntVar) -> None:
         self.var = var
@@ -264,7 +295,6 @@ class IntVarContainer:
         return self.var()
 
 
-Number = Union[int, float]
 Element = Union[IntVar, Number]
 ArithElement = Union[Element, MultiVar]
 ElementDict = Dict[Union[IntVar, str], Number]
