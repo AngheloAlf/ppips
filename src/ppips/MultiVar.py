@@ -47,3 +47,12 @@ class MultiVar(ComparableElement):
     def __neg__(self):
         raise RuntimeError("This class should not be instanciated.")
         return self
+
+    def __iter__(self):
+        for i in self.elements:
+            if isinstance(i, (int, float)):
+                yield i
+            else:
+                for j in i:
+                    yield j
+

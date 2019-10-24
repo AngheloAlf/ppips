@@ -18,7 +18,7 @@ class IntProblem:
     def __init__(self, name: str, vars: List[IntVar]) -> None:
         self.name = name
         self.vars = list(vars)
-        self.constraint = Constraints()
+        self.constraints = Constraints()
         self.objective: Union[Optimize, None] = None
 
     def get_expr(self) -> str:
@@ -26,14 +26,14 @@ class IntProblem:
 
     def __str__(self):
         obje = f"\n\tObjective: {str(self.objective)}" if self.objective is not None else ""
-        rest = str(self.constraint)
+        rest = str(self.constraints)
         vars_ = "\n\t".join(repr(x) for x in self.vars)
 
         return f"<{self.__class__.__name__}: {self.get_expr()!r}>{obje}\n\n\t{rest}\n\n\t{vars_}\n"
 
     def __iadd__(self, other: VarsComparison) -> IntProblem:
         if isinstance(other, VarsComparison):
-            self.constraint += other
+            self.constraints += other
             return self
         return NotImplemented
 
@@ -46,12 +46,44 @@ class IntProblem:
         return NotImplemented
 
     def evaluate(self, vars_dict: ElementDict) -> Tuple[bool, Union[Element, MultiVar, None]]:
-        valid = self.constraint(vars_dict)
+        valid = self.constraints(vars_dict)
         if not valid:
             return (False, None)
         if self.objective is not None:
             return (True, self.objective(vars_dict))
         return (True, None)
+
+    def compute_search_space(self) -> int:
+        total = 1
+        for i in self.vars:
+            total *= len(i.get_domain())
+        return total
+
+    def _node_consistency_(self, var: IntVar, constr: VarsComparison) -> bool:
+        """Apply node consistency to the var and returns True if just only 1 element is it's domain."""
+        for i in set(var.get_domain()):
+            if not constr(i):
+                var.remove_from_domain(i)
+        domain = var.get_domain()
+        if len(domain) == 0:
+            raise RuntimeError("Variable "+var.get_expr()+" has empty domain after node consistency.")
+        elif len(domain) == 1:
+            return True
+        return False
+
+    def node_consistency(self) -> None:
+        removed_constr = list()
+        for i in self.constraints:
+            constr_vars = i.get_vars()
+            if len(constr_vars) == 1:
+                if self._node_consistency_(list(constr_vars)[0], i):
+                    # var only has 1 posible value
+                    # -> remove var from problem
+                    # -> update constraints (instance this var as it's only value)
+                    # -> update objective
+                    pass
+                removed_constr.append(i)
+        self.constraints -= removed_constr
 
     def solve(self, solutions_type: str="all") -> List[ElementDict]:
         # first
@@ -74,7 +106,7 @@ class IntProblem:
             if isinstance(instance, (int, float)):
                 actual[var.get_var()] = instance
             i += 1
-            if self.constraint({}):
+            if self.constraints({}):
                 if i == len(vars_list):
                     if solutions_type == "first":
                         solutions.append(actual)
@@ -111,6 +143,5 @@ class IntProblem:
                 solutions.sort(key=lambda x: self.evaluate(x)[1], reverse=True)
             elif isinstance(self.objective, Minimize):
                 solutions.sort(key=lambda x: self.evaluate(x)[1])
-
 
         return solutions

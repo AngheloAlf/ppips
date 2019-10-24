@@ -51,7 +51,28 @@ class VarsComparison:
 
     def __call__(self, vars_dict) -> bool:
         return self.evaluate(vars_dict)
-       
+
+    def __bool__(self) -> bool:
+        return False
+    
+    def get_vars(self) -> set:
+        vars = set()
+        if not isinstance(self.left, (int, float)):
+            if bool(self.left):
+                vars.add(self.left)
+            else:
+                for l in self.left:
+                    if not isinstance(l, (int, float)) and bool(l):
+                        vars.add(l)
+        if not isinstance(self.right, (int, float)):
+            if bool(self.right):
+                vars.add(self.right)
+            else:
+                for r in self.right:
+                    if not isinstance(r, (int, float)) and bool(r):
+                        vars.add(r)
+        return vars
+
 
 class ComparableElement:
     def __lt__(self, other):
@@ -78,3 +99,6 @@ class ComparableElement:
         if(isinstance(other, VarsComparison)):
             raise RuntimeError()
         return VarsComparison(self, other, ">=")
+
+    def __bool__(self) -> bool:
+        return False

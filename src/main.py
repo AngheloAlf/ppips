@@ -26,8 +26,14 @@ if __name__ == "__main__":
     problem += z == 1
 
     print(problem)
+
+    print("Search space:", problem.compute_search_space())
+    problem.node_consistency()
+    print("Search space:", problem.compute_search_space())
+
+    print(problem)
     solutions = problem.solve("all")
-    print(len(solutions))
+    # print(len(solutions))
     for value in solutions:
         print([(k.get_expr(),v) for k, v in value.items()], problem.evaluate(value)[1])
 

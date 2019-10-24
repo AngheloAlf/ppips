@@ -91,6 +91,7 @@ class IntVar(ComparableElement, ArithmeticVar):
         self.value_instanced: Optional[Number] = None
 
     def __repr__(self):
+        return str(self)
         return f"{self.__class__.__name__}({self.name!r}, {self.domain!r})"
 
     def get_expr(self, *params) -> str:
@@ -104,6 +105,9 @@ class IntVar(ComparableElement, ArithmeticVar):
 
     def get_domain(self) -> Set[Number]:
         return self.domain
+    
+    def remove_from_domain(self, value: Number) -> None:
+        self.domain.remove(value)
     
     def instance_value(self, value: Number) -> None:
         if not self.is_valid(value):
@@ -134,6 +138,12 @@ class IntVar(ComparableElement, ArithmeticVar):
 
     def is_valid(self, value: Union[Number, ElementDict]) -> bool:
         return value in self.domain
+
+    def __bool__(self) -> bool:
+        return True
+
+    def __iter__(self):
+        yield self
 
 
 class IntVarAdds(MultiVar, ArithmeticVar):
