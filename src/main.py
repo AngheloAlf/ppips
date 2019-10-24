@@ -21,7 +21,7 @@ if __name__ == "__main__":
     problem @= Minimize(3*x-2*z)
 
     # restricciones
-    problem += x + y - z < 3
+    problem += x**2**x + y - z < 3
     problem += x+y + 1 > 2
     problem += z == 1
 
