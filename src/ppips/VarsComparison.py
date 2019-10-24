@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 class VarsComparison:
-    def __init__(self, left, right, comp_type: str):
+    def __init__(self, left, right, comp_type: str) -> None:
         self.left = left
         self.right = right
         self.comp_type = comp_type
@@ -16,7 +16,7 @@ class VarsComparison:
             left = str(self.left)
         else:
             left = self.left.get_expr(True)
-        if isinstance(self.left, (int, float)):
+        if isinstance(self.right, (int, float)):
             right = str(self.right)
         else:
             right = self.right.get_expr(True)
@@ -29,7 +29,7 @@ class VarsComparison:
         else:
             left = self.left(vars_dict)
 
-        if isinstance(self.left, (int, float)):
+        if isinstance(self.right, (int, float)):
             right = self.right
         else:
             right = self.right(vars_dict)
@@ -54,27 +54,27 @@ class VarsComparison:
        
 
 class ComparableElement:
-    def __lt__(self, other) -> VarsComparison:
+    def __lt__(self, other):
         if(isinstance(other, VarsComparison)):
             raise RuntimeError()
         return VarsComparison(self, other, "<")
-    def __le__(self, other) -> VarsComparison:
+    def __le__(self, other):
         if(isinstance(other, VarsComparison)):
             raise RuntimeError()
         return VarsComparison(self, other, "<=")
-    def __eq__(self, other) -> VarsComparison:
+    def __eq__(self, other):
         if(isinstance(other, VarsComparison)):
             raise RuntimeError()
         return VarsComparison(self, other, "==")
-    def __ne__(self, other) -> VarsComparison:
+    def __ne__(self, other):
         if(isinstance(other, VarsComparison)):
             raise RuntimeError()
         return VarsComparison(self, other, "!=")
-    def __gt__(self, other) -> VarsComparison:
+    def __gt__(self, other):
         if(isinstance(other, VarsComparison)):
             raise RuntimeError()
         return VarsComparison(self, other, ">")
-    def __ge__(self, other) -> VarsComparison:
+    def __ge__(self, other):
         if(isinstance(other, VarsComparison)):
             raise RuntimeError()
         return VarsComparison(self, other, ">=")

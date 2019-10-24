@@ -7,14 +7,14 @@ if __name__ == "__main__":
     y = IntVar("y", range(1,5))
     z = IntVar("z", range(3))
 
-    # """
+    """
     asdf = x+y-(x/y)*x + 3
     print(asdf)
     print(asdf({x:2, y:4, z:2}))
-    # """
-
-
     """
+
+
+    # """
     problem = IntProblem("Example", [x, y, z])
 
     # funcion objetivo
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     # print(problem.evaluate(solutions[0])[1])
     # print(problem.evaluate({x:1, y:2, z:1}))
 
-    """
+    # """
 
     """
     print()

@@ -10,8 +10,12 @@ from .VarsComparison import VarsComparison
 from .Constraints import Constraints
 from .Optimize import Optimize, Maximize, Minimize
 
+Number = Union[int, float]
+Element = Union[IntVar, Number]
+ElementDict = Dict[Union[IntVar, str], Number]
+
 class IntProblem:
-    def __init__(self, name: str, vars: List[IntVar]):
+    def __init__(self, name: str, vars: List[IntVar]) -> None:
         self.name = name
         self.vars = list(vars)
         self.constraint = Constraints()
@@ -41,7 +45,7 @@ class IntProblem:
             return self
         return NotImplemented
 
-    def evaluate(self, vars_dict:Dict[Union[IntVar, str], int]) -> Tuple[bool, Union[Number, None]]:
+    def evaluate(self, vars_dict: ElementDict) -> Tuple[bool, Union[Element, MultiVar, None]]:
         valid = self.constraint(vars_dict)
         if not valid:
             return (False, None)
@@ -49,12 +53,12 @@ class IntProblem:
             return (True, self.objective(vars_dict))
         return (True, None)
 
-    def solve(self, solutions_type:str="all") -> List[Dict[Union[IntVar, str], Number]]:
+    def solve(self, solutions_type: str="all") -> List[ElementDict]:
         # first
         # optimal
         # all
-        solutions = list()
-        actual = dict()
+        solutions: List[Dict[Union[IntVar, str], Number]] = list()
+        actual: Dict[Union[IntVar, str], Number] = dict()
         vars_list = [IntVarContainer(x) for x in self.vars]
         i = 0
         maxi = -float("inf")
@@ -66,7 +70,9 @@ class IntProblem:
                 var.reset_instances()
                 i -= 1
                 continue
-            actual[var.get_var()] = var.get_instanced()
+            instance = var.get_instanced()
+            if isinstance(instance, (int, float)):
+                actual[var.get_var()] = instance
             i += 1
             if self.constraint({}):
                 if i == len(vars_list):
@@ -74,7 +80,7 @@ class IntProblem:
                         solutions.append(actual)
                         break
                     elif solutions_type == "optimal":
-                        actual_value = self.evaluate(actual)[1]
+                        actual_value: Number = self.evaluate(actual)[1]
                         if isinstance(self.objective, Maximize):
                             if actual_value == maxi:
                                 solutions.append(actual)
@@ -94,17 +100,17 @@ class IntProblem:
                     i -= 1
             else:
                 i -= 1
-                del actual[var.get_var()]
+                if var.get_var() in actual:
+                    del actual[var.get_var()]
 
-        [x.de_instance() for x in self.vars]
+        for x in self.vars:
+            x.de_instance()
 
         if solutions_type == "all":
             if isinstance(self.objective, Maximize):
-                solutions.sort(key=lambda x:-self.evaluate(x)[1])
+                solutions.sort(key=lambda x: self.evaluate(x)[1], reverse=True)
             elif isinstance(self.objective, Minimize):
-                solutions.sort(key=lambda x:self.evaluate(x)[1])
+                solutions.sort(key=lambda x: self.evaluate(x)[1])
 
 
         return solutions
-
-Number = Union[int, float]

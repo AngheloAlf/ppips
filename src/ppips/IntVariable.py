@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import overload, List, Dict, Set, Union
+from typing import overload, List, Dict, Set, Union, Optional, Iterable
 
 from .VarsComparison import VarsComparison, ComparableElement
 from .MultiVar import MultiVar
@@ -10,12 +10,12 @@ from .MultiVar import MultiVar
 # https://docs.python.org/3/reference/datamodel.html
 
 class IntVar(ComparableElement):
-    def __init__(self, name:str, domain:Set[Number]):
-        self.name = name
+    def __init__(self, name: str, domain: Iterable[Number]) -> None:
+        self.name: str = name
         if len(domain) == 0:
             raise RuntimeError("Domain can't be empty")
-        self.domain = set(domain)
-        self.value_instanced: Union[int, None] = None
+        self.domain: Set[Number] = set(domain)
+        self.value_instanced: Optional[Number] = None
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.name!r}, {self.domain!r})"
@@ -40,14 +40,14 @@ class IntVar(ComparableElement):
     def de_instance(self) -> None:
         self.value_instanced = None
 
-    def __call__(self, value: Union[Number, Dict[Union[IntVar, str], Number], None] = None) -> Element:
+    def __call__(self, value: Union[Number, ElementDict] = None) -> Element:
         if value is None and self.value_instanced is None:
-            raise RuntimeError("Value not provided")
-        elif type(value)==int:
+            return self
+        elif isinstance(value, (int, float)):
             if not self.is_valid(value):
                 raise RuntimeError(f"Value must be part of {self.name}'s domain.")
             return value
-        elif type(value) == dict and self in value:
+        elif isinstance(value, dict) and self in value:
             out = value[self]
             if not self.is_valid(out):
                 raise RuntimeError(f"Value must be part of {self.name}'s domain.")
@@ -108,16 +108,16 @@ class IntVar(ComparableElement):
         return IntVarMult(first=-1, second=self)
 
 
-    def is_valid(self, value:int)->bool:
+    def is_valid(self, value: Union[Number, ElementDict]) -> bool:
         return value in self.domain
 
 
 class IntVarAdds(MultiVar):
-    def __init__(self, /, var_list:list=None, first=None, second=None):
+    def __init__(self, /, var_list:list=None, first=None, second=None) -> None:
         super().__init__(" + ", var_list=var_list, first=first, second=second)
 
-    def evaluate(self, vars_dict:Dict[Union[IntVar, str], Number]) -> ArithElement:
-        result = 0
+    def evaluate(self, vars_dict: ElementDict) -> ArithElement:
+        result: Number = 0
         for var in self.elements:
             if isinstance(var, (int, float)):
                 result += var
@@ -126,13 +126,7 @@ class IntVarAdds(MultiVar):
         return result
 
 
-    @overload
-    def __add__(self, other: IntVarDiv) -> IntVarAdds: ...
-    @overload
-    def __add__(self, other: IntVarMult) -> IntVarAdds: ...
-    @overload
-    def __add__(self, other: IntVarAdds) -> IntVarAdds: ...
-    def __add__(self, other: Element) -> IntVarAdds:
+    def __add__(self, other: ArithElement) -> IntVarAdds:
         if isinstance(other, (IntVar, int, float)):
             return IntVarAdds(var_list=self.elements+[other])
         elif isinstance(other, IntVarAdds):
@@ -150,13 +144,7 @@ class IntVarAdds(MultiVar):
         return NotImplemented
 
 
-    @overload
-    def __sub__(self, other: IntVarDiv) -> IntVarAdds: ...
-    @overload
-    def __sub__(self, other: IntVarMult) -> IntVarAdds: ...
-    @overload
-    def __sub__(self, other: IntVarAdds) -> IntVarAdds: ...
-    def __sub__(self, other: Element) -> IntVarAdds:
+    def __sub__(self, other: ArithElement) -> IntVarAdds:
         if isinstance(other, (IntVar, int, float)):
             return IntVarAdds(var_list=self.elements+[-other])
         elif isinstance(other, IntVarAdds):
@@ -173,13 +161,7 @@ class IntVarAdds(MultiVar):
         return NotImplemented
 
 
-    @overload
-    def __mul__(self, other: IntVarDiv) -> IntVarMult: ...
-    @overload
-    def __mul__(self, other: IntVarMult) -> IntVarMult: ...
-    @overload
-    def __mul__(self, other: IntVarAdds) -> IntVarMult: ...
-    def __mul__(self, other: Element) -> IntVarMult:
+    def __mul__(self, other: ArithElement) -> IntVarMult:
         if isinstance(other, (IntVar, int, float)):
             return IntVarMult(first=self, second=other)
         elif isinstance(other, IntVarAdds):
@@ -196,13 +178,7 @@ class IntVarAdds(MultiVar):
         return NotImplemented
 
 
-    @overload
-    def __truediv__(self, other: IntVarDiv) -> IntVarDiv: ...
-    @overload
-    def __truediv__(self, other: IntVarMult) -> IntVarDiv: ...
-    @overload
-    def __truediv__(self, other: IntVarAdds) -> IntVarDiv: ...
-    def __truediv__(self, other: Element) -> IntVarDiv:
+    def __truediv__(self, other: ArithElement) -> IntVarDiv:
         if isinstance(other, (IntVar, int, float)):
             return IntVarDiv(first=self, second=other)
         elif isinstance(other, IntVarAdds):
@@ -224,11 +200,10 @@ class IntVarAdds(MultiVar):
 
 
 class IntVarMult(MultiVar):
-    def __init__(self, /, var_list:list=None, first=None, second=None):
+    def __init__(self, /, var_list:list=None, first=None, second=None) -> None:
         super().__init__("*", var_list=var_list, first=first, second=second, parenthesis=False)
 
-    # def evaluate(self, vars_dict:dict) -> int:
-    def evaluate(self, vars_dict:Dict[Union[IntVar, str], Number]) -> ArithElement:
+    def evaluate(self, vars_dict:ElementDict) -> ArithElement:
         result = 1
         for var in self.elements:
             if type(var) == int:
@@ -238,13 +213,7 @@ class IntVarMult(MultiVar):
         return result
 
 
-    @overload
-    def __add__(self, other: IntVarDiv) -> IntVarAdds: ...
-    @overload
-    def __add__(self, other: IntVarMult) -> IntVarAdds: ...
-    @overload
-    def __add__(self, other: IntVarAdds) -> IntVarAdds: ...
-    def __add__(self, other: Element) -> IntVarAdds:
+    def __add__(self, other: ArithElement) -> IntVarAdds:
         if isinstance(other, (IntVar, int, float)):
             return IntVarAdds(first=self, second=other)
         elif isinstance(other, IntVarAdds):
@@ -261,13 +230,7 @@ class IntVarMult(MultiVar):
         return NotImplemented
 
 
-    @overload
-    def __sub__(self, other: IntVarDiv) -> IntVarAdds: ...
-    @overload
-    def __sub__(self, other: IntVarMult) -> IntVarAdds: ...
-    @overload
-    def __sub__(self, other: IntVarAdds) -> IntVarAdds: ...
-    def __sub__(self, other: Element) -> IntVarAdds:
+    def __sub__(self, other: ArithElement) -> IntVarAdds:
         if isinstance(other, (IntVar, int, float)):
             return IntVarAdds(first=self, second=-other)
         elif isinstance(other, IntVarAdds):
@@ -284,13 +247,7 @@ class IntVarMult(MultiVar):
         return NotImplemented
 
 
-    @overload
-    def __mul__(self, other: IntVarDiv) -> IntVarMult: ...
-    @overload
-    def __mul__(self, other: IntVarMult) -> IntVarMult: ...
-    @overload
-    def __mul__(self, other: IntVarAdds) -> IntVarMult: ...
-    def __mul__(self, other: Element) -> IntVarMult:
+    def __mul__(self, other: ArithElement) -> IntVarMult:
         if isinstance(other, (IntVar, int, float)):
             return IntVarMult(var_list=self.elements+[other])
         elif isinstance(other, IntVarAdds):
@@ -307,13 +264,7 @@ class IntVarMult(MultiVar):
         return NotImplemented
 
 
-    @overload
-    def __truediv__(self, other: IntVarDiv) -> IntVarDiv: ...
-    @overload
-    def __truediv__(self, other: IntVarMult) -> IntVarDiv: ...
-    @overload
-    def __truediv__(self, other: IntVarAdds) -> IntVarDiv: ...
-    def __truediv__(self, other: Element) -> IntVarDiv:
+    def __truediv__(self, other: ArithElement) -> IntVarDiv:
         if isinstance(other, (IntVar, int, float)):
             return IntVarDiv(first=self, second=other)
         elif isinstance(other, IntVarAdds):
@@ -336,11 +287,11 @@ class IntVarMult(MultiVar):
 
 
 class IntVarDiv(MultiVar):
-    def __init__(self, /, var_list:list=None, first=None, second=None):
+    def __init__(self, /, var_list:list=None, first=None, second=None) -> None:
         super().__init__("/", var_list=var_list, first=first, second=second)
 
-    def evaluate(self, vars_dict:Dict[Union[IntVar, str], Number]) -> ArithElement:
-        result = 1
+    def evaluate(self, vars_dict:ElementDict) -> ArithElement:
+        result: Number = 1
         var = self.elements[0]
         if isinstance(var, (int, float)):
             result *= var
@@ -353,13 +304,8 @@ class IntVarDiv(MultiVar):
                 result /= var(vars_dict)
         return result
 
-    @overload
-    def __add__(self, other: IntVarDiv) -> IntVarAdds: ...
-    @overload
-    def __add__(self, other: IntVarMult) -> IntVarAdds: ...
-    @overload
-    def __add__(self, other: IntVarAdds) -> IntVarAdds: ...
-    def __add__(self, other: Element) -> IntVarAdds:
+
+    def __add__(self, other: ArithElement) -> IntVarAdds:
         if isinstance(other, (IntVar, int, float)):
             return IntVarAdds(first=self, second=other)
         elif isinstance(other, IntVarAdds):
@@ -376,13 +322,7 @@ class IntVarDiv(MultiVar):
         return NotImplemented
 
 
-    @overload
-    def __sub__(self, other: IntVarDiv) -> IntVarAdds: ...
-    @overload
-    def __sub__(self, other: IntVarMult) -> IntVarAdds: ...
-    @overload
-    def __sub__(self, other: IntVarAdds) -> IntVarAdds: ...
-    def __sub__(self, other: Element) -> IntVarAdds:
+    def __sub__(self, other: ArithElement) -> IntVarAdds:
         if isinstance(other, (IntVar, int, float)):
             return IntVarAdds(first=self, second=-other)
         elif isinstance(other, IntVarAdds):
@@ -399,13 +339,7 @@ class IntVarDiv(MultiVar):
         return NotImplemented
 
 
-    @overload
-    def __mul__(self, other: IntVarDiv) -> IntVarMult: ...
-    @overload
-    def __mul__(self, other: IntVarMult) -> IntVarMult: ...
-    @overload
-    def __mul__(self, other: IntVarAdds) -> IntVarMult: ...
-    def __mul__(self, other: Element) -> IntVarMult:
+    def __mul__(self, other: ArithElement) -> IntVarMult:
         if isinstance(other, (IntVar, int, float)):
             return IntVarMult(first=self, second=other)
         elif isinstance(other, IntVarAdds):
@@ -422,13 +356,7 @@ class IntVarDiv(MultiVar):
         return NotImplemented
 
 
-    @overload
-    def __truediv__(self, other: IntVarDiv) -> IntVarDiv: ...
-    @overload
-    def __truediv__(self, other: IntVarMult) -> IntVarDiv: ...
-    @overload
-    def __truediv__(self, other: IntVarAdds) -> IntVarDiv: ...
-    def __truediv__(self, other: Element) -> IntVarDiv:
+    def __truediv__(self, other: ArithElement) -> IntVarDiv:
         if isinstance(other, (IntVar, int, float)):
             return IntVarDiv(var_list=self.elements+[other])
         elif isinstance(other, IntVarAdds):
@@ -450,7 +378,7 @@ class IntVarDiv(MultiVar):
 
 
 class IntVarContainer:
-    def __init__(self, var: IntVar):
+    def __init__(self, var: IntVar) -> None:
         self.var = var
         self.domain = list(var.domain)
         self.pos = 0
@@ -480,4 +408,5 @@ class IntVarContainer:
 
 Number = Union[int, float]
 Element = Union[IntVar, Number]
-ArithElement = Union[Element, IntVarAdds, IntVarMult, IntVarDiv]
+ArithElement = Union[Element, MultiVar]
+ElementDict = Dict[Union[IntVar, str], Number]

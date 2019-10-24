@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import overload, Dict
+from typing import overload, List, Dict
 
 from .IntVariable import IntVar
 from .MultiVar import MultiVar
@@ -10,8 +10,8 @@ from .VarsComparison import VarsComparison
 from .Optimize import Optimize, Maximize, Minimize
 
 class Constraints:
-    def __init__(self):
-        self.constr = list()
+    def __init__(self) -> None:
+        self.constr: List[VarsComparison] = list()
 
     def __str__(self):
         rest = f"<{self.__class__.__name__}:>"
