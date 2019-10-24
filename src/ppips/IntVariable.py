@@ -13,66 +13,102 @@ Number = Union[int, float]
 
 class ArithmeticVar:
     def __add__(self, other: ArithElement) -> IntVarAdds:
+        if other == 0:
+            return self
         if isinstance(other, (IntVar, int, float, MultiVar)):
             return IntVarAdds(first=self, second=other)
         return NotImplemented
     
     def __radd__(self, other: Element) -> IntVarAdds:
+        if other == 0:
+            return self
         if isinstance(other, (IntVar, int, float)):
             return IntVarAdds(first=other, second=self)
         return NotImplemented
 
 
     def __sub__(self, other: ArithElement) -> IntVarAdds:
+        if other == 0:
+            return self
         if isinstance(other, (IntVar, int, float, MultiVar)):
             return IntVarAdds(first=self, second=-other)
         return NotImplemented
 
     def __rsub__(self, other: Element) -> IntVarAdds:
+        if other == 0:
+            return -self
         if isinstance(other, (IntVar, int, float)):
             return IntVarAdds(first=other, second=-self)
         return NotImplemented
 
 
     def __mul__(self, other: ArithElement) -> IntVarMult:
+        if other == 0:
+            return 0
+        if other == 1:
+            return self
         if isinstance(other, (IntVar, int, float, MultiVar)):
             return IntVarMult(first=self, second=other)
         return NotImplemented
 
     def __rmul__(self, other: Element) -> IntVarMult:
+        if other == 0:
+            return 0
+        if other == 1:
+            return self
         if isinstance(other, (IntVar, int, float)):
             return IntVarMult(first=other, second=self)
         return NotImplemented
 
 
     def __truediv__(self, other: ArithElement) -> IntVarDiv:
+        if other == 0:
+            raise ZeroDivisionError()
+        if other == 1:
+            return self
         if isinstance(other, (IntVar, int, float, MultiVar)):
             return IntVarDiv(first=self, second=other)
         return NotImplemented
 
     def __rtruediv__(self, other: Element) -> IntVarDiv:
+        if other == 0:
+            return 0
         if isinstance(other, (IntVar, int, float)):
             return IntVarDiv(first=other, second=self)
         return NotImplemented
 
 
     def __pow__(self, other: Element) -> IntVarPow:
+        if other == 0:
+            return 1
+        if other == 1:
+            return self
         if isinstance(other, (IntVar, int, float, MultiVar)):
             return IntVarPow(first=self, second=other)
         return NotImplemented
 
     def __rpow__(self, other: Element) -> IntVarPow:
+        if other == 0:
+            return 0
+        if other == 1:
+            return 1
         if isinstance(other, (IntVar, int, float)):
             return IntVarPow(first=other, second=self)
         return NotImplemented
 
 
     def __mod__(self, other: Element) -> IntVarPow:
+        if other == 0:
+            raise ZeroDivisionError()
+        if other == 1:
+            return 0
         if isinstance(other, (IntVar, int, float, MultiVar)):
             return IntVarMod(first=self, second=other)
         return NotImplemented
 
     def __rmod__(self, other: Element) -> IntVarPow:
+        if other == 0:
+            return 0
         if isinstance(other, (IntVar, int, float)):
             return IntVarMod(first=other, second=self)
         return NotImplemented
@@ -161,6 +197,8 @@ class IntVarAdds(MultiVar, ArithmeticVar):
 
 
     def __add__(self, other: ArithElement) -> IntVarAdds:
+        if other == 0:
+            return self
         if isinstance(other, (IntVar, int, float)):
             return IntVarAdds(var_list=self.elements+[other])
         elif isinstance(other, IntVarAdds):
@@ -168,12 +206,16 @@ class IntVarAdds(MultiVar, ArithmeticVar):
         return super().__add__(other)
 
     def __radd__(self, other: Element) -> IntVarAdds:
+        if other == 0:
+            return self
         if isinstance(other, (IntVar, int, float)):
             return IntVarAdds(var_list=[other]+self.elements)
         return NotImplemented
 
 
     def __sub__(self, other: ArithElement) -> IntVarAdds:
+        if other == 0:
+            return self
         if isinstance(other, (IntVar, int, float, MultiVar)):
             return IntVarAdds(var_list=self.elements+[-other])
         return NotImplemented
@@ -194,6 +236,10 @@ class IntVarMult(MultiVar, ArithmeticVar):
 
 
     def __mul__(self, other: ArithElement) -> IntVarMult:
+        if other == 0:
+            return 0
+        if other == 1:
+            return self
         if isinstance(other, (IntVar, int, float)):
             return IntVarMult(var_list=self.elements+[other])
         elif isinstance(other, IntVarMult):
@@ -201,6 +247,10 @@ class IntVarMult(MultiVar, ArithmeticVar):
         return super().__mul__(other)
 
     def __rmul__(self, other: Element) -> IntVarMult:
+        if other == 0:
+            return 0
+        if other == 1:
+            return self
         if isinstance(other, (IntVar, int, float)):
             return IntVarMult(var_list=[other]+self.elements)
         return NotImplemented
@@ -231,6 +281,10 @@ class IntVarDiv(MultiVar, ArithmeticVar):
 
 
     def __truediv__(self, other: ArithElement) -> IntVarDiv:
+        if other == 0:
+            raise ZeroDivisionError()
+        if other == 1:
+            return self
         if isinstance(other, (IntVar, int, float)):
             return IntVarDiv(var_list=self.elements+[other])
         elif isinstance(other, IntVarDiv):
