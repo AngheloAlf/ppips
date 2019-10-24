@@ -98,7 +98,7 @@ class IntVar(ComparableElement):
             return IntVarDiv(first=self, second=other)
         return NotImplemented
 
-    def __rtruediv__(self, other):
+    def __rtruediv__(self, other: Element) -> IntVarDiv:
         if isinstance(other, (IntVar, int, float)):
             return IntVarDiv(first=other, second=self)
         return NotImplemented
@@ -112,7 +112,59 @@ class IntVar(ComparableElement):
         return value in self.domain
 
 
-class IntVarAdds(MultiVar):
+class ArithMultiVar(MultiVar):
+    def __init__(self, simbol: str, /, var_list: list=None, first=None, second=None, parenthesis: bool=True) -> None:
+        super().__init__(simbol, var_list=var_list, first=first, second=second, parenthesis=parenthesis)
+
+    def __add__(self, other: ArithElement) -> IntVarAdds:
+        if isinstance(other, (IntVar, int, float, MultiVar)):
+            return IntVarAdds(first=self, second=other)
+        return NotImplemented
+    
+    def __radd__(self, other: Element) -> IntVarAdds:
+        if isinstance(other, (IntVar, int, float)):
+            return IntVarAdds(first=other, second=self)
+        return NotImplemented
+
+
+    def __sub__(self, other: ArithElement) -> IntVarAdds:
+        if isinstance(other, (IntVar, int, float, MultiVar)):
+            return IntVarAdds(first=self, second=-other)
+        return NotImplemented
+
+    def __rsub__(self, other: Element) -> IntVarAdds:
+        if isinstance(other, (IntVar, int, float)):
+            return IntVarAdds(first=other, second=-self)
+        return NotImplemented
+
+
+    def __mul__(self, other: ArithElement) -> IntVarMult:
+        if isinstance(other, (IntVar, int, float, MultiVar)):
+            return IntVarMult(first=self, second=other)
+        return NotImplemented
+
+    def __rmul__(self, other: Element) -> IntVarMult:
+        if isinstance(other, (IntVar, int, float)):
+            return IntVarMult(first=other, second=self)
+        return NotImplemented
+
+
+    def __truediv__(self, other: ArithElement) -> IntVarDiv:
+        if isinstance(other, (IntVar, int, float, MultiVar)):
+            return IntVarDiv(first=self, second=other)
+        return NotImplemented
+
+    def __rtruediv__(self, other: Element) -> IntVarDiv:
+        if isinstance(other, (IntVar, int, float)):
+            return IntVarDiv(first=other, second=self)
+        return NotImplemented
+
+
+    def __neg__(self) -> IntVarMult:
+        return IntVarMult(first=-1, second=self)
+
+
+class IntVarAdds(ArithMultiVar):
     def __init__(self, /, var_list:list=None, first=None, second=None) -> None:
         super().__init__(" + ", var_list=var_list, first=first, second=second)
 
@@ -131,12 +183,7 @@ class IntVarAdds(MultiVar):
             return IntVarAdds(var_list=self.elements+[other])
         elif isinstance(other, IntVarAdds):
             return IntVarAdds(var_list=self.elements+other.elements)
-        elif isinstance(other, IntVarMult):
-            return IntVarAdds(var_list=self.elements+[other])
-        elif isinstance(other, IntVarDiv):
-            return IntVarAdds(var_list=self.elements+[other])
-        return NotImplemented
-
+        return super().__add__(other)
 
     def __radd__(self, other: Element) -> IntVarAdds:
         if isinstance(other, (IntVar, int, float)):
@@ -145,61 +192,12 @@ class IntVarAdds(MultiVar):
 
 
     def __sub__(self, other: ArithElement) -> IntVarAdds:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarAdds(var_list=self.elements+[-other])
-        elif isinstance(other, IntVarAdds):
-            return IntVarAdds(var_list=self.elements+[-other])
-        elif isinstance(other, IntVarMult):
-            return IntVarAdds(var_list=self.elements+[-other])
-        elif isinstance(other, IntVarDiv):
+        if isinstance(other, (IntVar, int, float, MultiVar)):
             return IntVarAdds(var_list=self.elements+[-other])
         return NotImplemented
 
-    def __rsub__(self, other: Element) -> IntVarAdds:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarAdds(first=other, second=-self)
-        return NotImplemented
 
-
-    def __mul__(self, other: ArithElement) -> IntVarMult:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarMult(first=self, second=other)
-        elif isinstance(other, IntVarAdds):
-            return IntVarMult(first=self, second=other)
-        elif isinstance(other, IntVarMult):
-            return IntVarMult(first=self, second=other)
-        elif isinstance(other, IntVarDiv):
-            return IntVarMult(first=self, second=other)
-        return NotImplemented
-
-    def __rmul__(self, other: Element) -> IntVarMult:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarMult(first=other, second=self)
-        return NotImplemented
-
-
-    def __truediv__(self, other: ArithElement) -> IntVarDiv:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarDiv(first=self, second=other)
-        elif isinstance(other, IntVarAdds):
-            return IntVarDiv(first=self, second=other)
-        elif isinstance(other, IntVarMult):
-            return IntVarDiv(first=self, second=other)
-        elif isinstance(other, IntVarDiv):
-            return IntVarDiv(first=self, second=other)
-        return NotImplemented
-
-    def __rtruediv__(self, other: Element) -> IntVarDiv:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarDiv(first=other, second=self)
-        return NotImplemented
-
-
-    def __neg__(self) -> IntVarMult:
-        return IntVarMult(first=-1, second=self)
-
-
-class IntVarMult(MultiVar):
+class IntVarMult(ArithMultiVar):
     def __init__(self, /, var_list:list=None, first=None, second=None) -> None:
         super().__init__("*", var_list=var_list, first=first, second=second, parenthesis=False)
 
@@ -213,71 +211,16 @@ class IntVarMult(MultiVar):
         return result
 
 
-    def __add__(self, other: ArithElement) -> IntVarAdds:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarAdds(first=self, second=other)
-        elif isinstance(other, IntVarAdds):
-            return IntVarAdds(first=self, second=other)
-        elif isinstance(other, IntVarMult):
-            return IntVarAdds(first=self, second=other)
-        elif isinstance(other, IntVarDiv):
-            return IntVarAdds(first=self, second=other)
-        return NotImplemented
-
-    def __radd__(self, other: Element) -> IntVarAdds:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarAdds(first=other, second=self)
-        return NotImplemented
-
-
-    def __sub__(self, other: ArithElement) -> IntVarAdds:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarAdds(first=self, second=-other)
-        elif isinstance(other, IntVarAdds):
-            return IntVarAdds(first=self, second=-other)
-        elif isinstance(other, IntVarMult):
-            return IntVarAdds(first=self, second=-other)
-        elif isinstance(other, IntVarDiv):
-            return IntVarAdds(first=self, second=-other)
-        return NotImplemented
-
-    def __rsub__(self, other: Element) -> IntVarAdds:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarAdds(first=other, second=-self)
-        return NotImplemented
-
-
     def __mul__(self, other: ArithElement) -> IntVarMult:
         if isinstance(other, (IntVar, int, float)):
             return IntVarMult(var_list=self.elements+[other])
-        elif isinstance(other, IntVarAdds):
-            return IntVarMult(first=self, second=other)
         elif isinstance(other, IntVarMult):
             return IntVarMult(var_list=self.elements+other.elements)
-        elif isinstance(other, IntVarDiv):
-            return IntVarMult(first=self, second=other)
-        return NotImplemented
+        return super().__mul__(other)
 
     def __rmul__(self, other: Element) -> IntVarMult:
         if isinstance(other, (IntVar, int, float)):
             return IntVarMult(var_list=[other]+self.elements)
-        return NotImplemented
-
-
-    def __truediv__(self, other: ArithElement) -> IntVarDiv:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarDiv(first=self, second=other)
-        elif isinstance(other, IntVarAdds):
-            return IntVarDiv(first=self, second=other)
-        elif isinstance(other, IntVarMult):
-            return IntVarDiv(first=self, second=other)
-        elif isinstance(other, IntVarDiv):
-            return IntVarDiv(first=self, second=other)
-        return NotImplemented
-
-    def __rtruediv__(self, other: Element) -> IntVarDiv:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarDiv(first=other, second=self)
         return NotImplemented
 
 
@@ -286,7 +229,7 @@ class IntVarMult(MultiVar):
         return self
 
 
-class IntVarDiv(MultiVar):
+class IntVarDiv(ArithMultiVar):
     def __init__(self, /, var_list:list=None, first=None, second=None) -> None:
         super().__init__("/", var_list=var_list, first=first, second=second)
 
@@ -305,76 +248,12 @@ class IntVarDiv(MultiVar):
         return result
 
 
-    def __add__(self, other: ArithElement) -> IntVarAdds:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarAdds(first=self, second=other)
-        elif isinstance(other, IntVarAdds):
-            return IntVarAdds(first=self, second=other)
-        elif isinstance(other, IntVarMult):
-            return IntVarAdds(first=self, second=other)
-        elif isinstance(other, IntVarDiv):
-            return IntVarAdds(first=self, second=other)
-        return NotImplemented
-
-    def __radd__(self, other: Element) -> IntVarAdds:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarAdds(first=other, second=self)
-        return NotImplemented
-
-
-    def __sub__(self, other: ArithElement) -> IntVarAdds:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarAdds(first=self, second=-other)
-        elif isinstance(other, IntVarAdds):
-            return IntVarAdds(first=self, second=-other)
-        elif isinstance(other, IntVarMult):
-            return IntVarAdds(first=self, second=-other)
-        elif isinstance(other, IntVarDiv):
-            return IntVarAdds(first=self, second=-other)
-        return NotImplemented
-
-    def __rsub__(self, other: Element) -> IntVarAdds:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarAdds(first=other, second=-self)
-        return NotImplemented
-
-
-    def __mul__(self, other: ArithElement) -> IntVarMult:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarMult(first=self, second=other)
-        elif isinstance(other, IntVarAdds):
-            return IntVarMult(first=self, second=other)
-        elif isinstance(other, IntVarMult):
-            return IntVarMult(first=self, second=other)
-        elif isinstance(other, IntVarDiv):
-            return IntVarMult(first=self, second=other)
-        return NotImplemented
-
-    def __rmul__(self, other: Element) -> IntVarMult:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarMult(first=other, second=self)
-        return NotImplemented
-
-
     def __truediv__(self, other: ArithElement) -> IntVarDiv:
         if isinstance(other, (IntVar, int, float)):
             return IntVarDiv(var_list=self.elements+[other])
-        elif isinstance(other, IntVarAdds):
-            return IntVarDiv(first=self, second=other)
-        elif isinstance(other, IntVarMult):
-            return IntVarDiv(first=self, second=other)
         elif isinstance(other, IntVarDiv):
             return IntVarDiv(var_list=self.elements+other.elements)
-        return NotImplemented
-
-    def __rtruediv__(self, other: Element) -> IntVarDiv:
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarDiv(first=other, second=self)
-        return NotImplemented
-    
-
-    def __neg__(self) -> IntVarMult:
-        return IntVarMult(first=-1, second=self)
+        return super().__truediv__(other)
 
 
 class IntVarContainer:
