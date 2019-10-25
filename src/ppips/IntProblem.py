@@ -28,7 +28,8 @@ class IntProblem:
     def __str__(self):
         obje = f"\n\tObjective: {str(self.objective)}" if self.objective is not None else ""
         rest = str(self.constraints)
-        vars_ = "\n\t".join(repr(x) for x in self.vars)
+        # vars_ = "\n\t".join(repr(x) for x in self.vars)
+        vars_ = f"Variables: {len(str.vars)}"
 
         return f"<{self.__class__.__name__}: {self.get_expr()!r}>{obje}\n\n\t{rest}\n\n\t{vars_}\n"
 
@@ -80,13 +81,17 @@ class IntProblem:
                 var = list(constr_vars)[0]
                 if self._node_consistency_(var, i):
                     var_value = list(var.get_domain())[0]
+                    if var in self.removed_vars and self.removed_vars[var] != var_value:
+                        raise RuntimeError("Da fuck?")
                     self.removed_vars[var] = var_value
-                    self.vars.remove(var)
+                    if var in self.vars: 
+                        self.vars.remove(var)
                 removed_constr.append(i)
         self.constraints -= removed_constr
         if len(removed_constr) > 0:
             self.constraints.update_constraints(self.removed_vars)
-            self.objective.update(self.removed_vars)
+            if self.objective is not None:
+                self.objective.update(self.removed_vars)
 
 
     def solve(self, solutions_type: str="all") -> List[ElementDict]:

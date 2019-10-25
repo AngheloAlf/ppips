@@ -43,10 +43,6 @@ class MultiVar(ComparableElement):
     
     def __call__(self, vars_dict:dict):
         return self.evaluate(vars_dict)
-    
-    def __neg__(self):
-        raise RuntimeError("This class should not be instanciated.")
-        return self
 
     def __iter__(self):
         for i in self.elements:

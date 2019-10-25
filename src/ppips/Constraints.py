@@ -52,7 +52,11 @@ class Constraints:
     def update_constraints(self, vars_dict: ElementDict) -> None:
         updated = list()
         for i in self.constr:
-            updated.append(i(vars_dict))
+            constr = i(vars_dict)
+            if isinstance(constr, VarsComparison):
+                updated.append(constr)
+            elif not constr:
+                raise RuntimeError(f"Constraint false with provieded value.\n\n\tConstraint: {i}\n\n\tvalues: {vars_dict}")
         self.constr = updated
 
     def __iter__(self):
