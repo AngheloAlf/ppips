@@ -199,10 +199,10 @@ class IntVarAdds(MultiVar, ArithmeticVar):
     def __add__(self, other: ArithElement) -> IntVarAdds:
         if other == 0:
             return self
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarAdds(var_list=self.elements+[other])
-        elif isinstance(other, IntVarAdds):
+        if isinstance(other, IntVarAdds):
             return IntVarAdds(var_list=self.elements+other.elements)
+        elif isinstance(other, (IntVar, int, float, MultiVar)):
+            return IntVarAdds(var_list=self.elements+[other])
         return super().__add__(other)
 
     def __radd__(self, other: Element) -> IntVarAdds:
