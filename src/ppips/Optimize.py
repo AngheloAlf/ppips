@@ -18,7 +18,13 @@ class Optimize:
         self.objective = objective
 
     def __str__(self) -> str:
-        return f"<{self.__class__.__name__}: {self.objective.get_expr(True)} >"
+        value = f"<{self.__class__.__name__}: "
+        if isinstance(self.objective, (int, float)):
+            value += f"{self.objective}"
+        else:
+            value += f"{self.objective.get_expr(True)}"
+        value += " >"
+        return value
     
     def __call__(self, vars_dict: ElementDict) -> Union[Element, MultiVar]:
         if isinstance(self.objective, (IntVar, MultiVar)):

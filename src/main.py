@@ -22,16 +22,19 @@ if __name__ == "__main__":
 
     # restricciones
     problem += x**2**x + y - z < 3
-    problem += x+y + 1 > 2
+    problem += x + y + 1 > 2
+    problem += x + z > 1
     problem += z == 1
-
-    print(problem)
 
     print("Search space:", problem.compute_search_space())
     problem.node_consistency()
     print("Search space:", problem.compute_search_space())
 
-    print(problem)
+    print("Search space:", problem.compute_search_space())
+    problem.arc_consistency()
+    print("Search space:", problem.compute_search_space())
+
+    # print(problem)
     solutions = problem.solve("all")
     # print(len(solutions))
     for value in solutions:

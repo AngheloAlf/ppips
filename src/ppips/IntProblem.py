@@ -29,7 +29,7 @@ class IntProblem:
         obje = f"\n\tObjective: {str(self.objective)}" if self.objective is not None else ""
         rest = str(self.constraints)
         # vars_ = "\n\t".join(repr(x) for x in self.vars)
-        vars_ = f"Variables: {len(str.vars)}"
+        vars_ = f"Variables: {len(self.vars)}"
 
         return f"<{self.__class__.__name__}: {self.get_expr()!r}>{obje}\n\n\t{rest}\n\n\t{vars_}\n"
 
@@ -61,17 +61,14 @@ class IntProblem:
             total *= len(i.get_domain())
         return total
 
-    def _node_consistency_(self, var: IntVar, constr: VarsComparison) -> bool:
-        """Apply node consistency to the var and returns True if just only 1 element is it's domain."""
-        for i in set(var.get_domain()):
-            if not constr(i):
-                var.remove_from_domain(i)
-        domain = var.get_domain()
-        if len(domain) == 0:
-            raise RuntimeError("Variable "+var.get_expr()+" has empty domain after node consistency.")
-        elif len(domain) == 1:
-            return True
-        return False
+    def get_constraints_for_var(self, var: IntVar, min_vars: int = 1, max_vars: int = 0) -> Set[VarsComparison]:
+        constrs: Set[VarsComparison] = set()
+        for i in self.constraints:
+            constr_vars = i.get_vars()
+            if var in constr_vars:
+                if len(constr_vars)>=min_vars and (max_vars == 0 or len(constr_vars) <= max_vars):
+                    constrs.add(i)
+        return constrs
 
     def node_consistency(self) -> None:
         removed_constr = list()
@@ -79,19 +76,70 @@ class IntProblem:
             constr_vars = i.get_vars()
             if len(constr_vars) == 1:
                 var = list(constr_vars)[0]
-                if self._node_consistency_(var, i):
+                if node_consistency(var, i)[0]:
                     var_value = list(var.get_domain())[0]
-                    if var in self.removed_vars and self.removed_vars[var] != var_value:
-                        raise RuntimeError("Da fuck?")
-                    self.removed_vars[var] = var_value
-                    if var in self.vars: 
-                        self.vars.remove(var)
+                    if var in self.removed_vars:
+                        if self.removed_vars[var] != var_value:
+                            raise RuntimeError("Da fuck?")
+                    else:
+                        self.removed_vars[var] = var_value
+                        if var in self.vars: 
+                            self.vars.remove(var)
                 removed_constr.append(i)
         self.constraints -= removed_constr
         if len(removed_constr) > 0:
             self.constraints.update_constraints(self.removed_vars)
             if self.objective is not None:
                 self.objective.update(self.removed_vars)
+    
+    def arc_consistency(self) -> None:
+        self.node_consistency()
+        for i in self.vars:
+            removed_constr = list()
+            constr_queue: List[VarsComparison] = list(self.get_constraints_for_var(i, 2, 2))
+            while len(constr_queue) > 0:
+                popped = constr_queue.pop()
+                j = list(popped.get_vars()-{i})[0]
+                has_solution1, has_solution2, amount1, amount2 = arc_consistency(i, j, popped)
+
+                if has_solution1 and has_solution2:
+                    # remove constraint if both has_solution
+                    removed_constr.append(popped)
+
+                if has_solution1:
+                    # remove variable if has_solution1
+                    var_value = list(i.get_domain())[0]
+                    if i in self.removed_vars:
+                        if self.removed_vars[i] != var_value:
+                            raise RuntimeError("Da fuck?")
+                    else:
+                        self.removed_vars[i] = var_value
+                        if i in self.vars: 
+                            self.vars.remove(i)
+                elif amount1 > 0:
+                    constr_queue += list(self.get_constraints_for_var(i, 2, 2))
+
+                if has_solution2:
+                    # remove variable if has_solution2
+                    var_value = list(j.get_domain())[0]
+                    if j in self.removed_vars:
+                        if self.removed_vars[j] != var_value:
+                            raise RuntimeError("Da fuck?")
+                    else:
+                        self.removed_vars[j] = var_value
+                        if j in self.vars: 
+                            self.vars.remove(j)
+                elif amount2 > 0:
+                    constr_queue += list(self.get_constraints_for_var(j, 2, 2))
+
+            # remove constraints
+            self.constraints -= removed_constr
+            # update constraints
+            self.constraints.update_constraints(self.removed_vars)
+            if self.objective is not None:
+                # update objective
+                self.objective.update(self.removed_vars)
+            self.node_consistency()
 
 
     def solve(self, solutions_type: str="all") -> List[ElementDict]:
@@ -155,3 +203,50 @@ class IntProblem:
 
         solutions = [{**x, **self.removed_vars} for x in solutions]
         return solutions
+
+def node_consistency(var: IntVar, constr: VarsComparison) -> Tuple[bool, int]:
+    """Apply node consistency to the var, and returns True if just only 1 element is left in it's domain, and the amount of removed values."""
+    assert(len(constr.get_vars()) == 1)
+    values_removed = 0
+    for i in set(var.get_domain()):
+        if not constr(i):
+            var.remove_from_domain(i)
+            values_removed += 1
+    domain = var.get_domain()
+    if len(domain) == 0:
+        raise RuntimeError("Variable "+var.get_expr()+" has empty domain after node consistency.")
+    return (len(domain) == 1, values_removed)
+
+def arc_consistency(var1: IntVar, var2: IntVar, constr: VarsComparison) -> Tuple[bool, bool, int, int]:
+    """Apply arc consistency to both vars, and returns True if just only 1 element is left for each of it's domains, and the amount of removed values for each variable."""
+    assert(len(constr.get_vars()) == 2)
+    values_removed_1 = 0
+    for i in set(var1.get_domain()):
+        remove = True
+        for j in set(var2.get_domain()):
+            if constr({var1: i, var2: j}):
+                remove = False
+                break
+        if remove:
+            var1.remove_from_domain(i)
+            values_removed_1 += 1
+
+    values_removed_2 = 0
+    for j in set(var2.get_domain()):
+        remove = True
+        for i in set(var1.get_domain()):
+            if constr({var1: i, var2: j}):
+                remove = False
+                break
+        if remove:
+            var2.remove_from_domain(j)
+            values_removed_2 += 1
+    
+    domain1 = var1.get_domain()
+    domain2 = var2.get_domain()
+    if len(domain1) == 0:
+        raise RuntimeError("Variable "+var1.get_expr()+" has empty domain after arc consistency.")
+    elif len(domain2) == 0:
+        raise RuntimeError("Variable "+var2.get_expr()+" has empty domain after arc consistency.")
+    return (len(domain1) == 1, len(domain2) == 1, values_removed_1, values_removed_2)
+    
