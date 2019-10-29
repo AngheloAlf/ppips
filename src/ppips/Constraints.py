@@ -56,7 +56,7 @@ class Constraints:
             if isinstance(constr, VarsComparison):
                 updated.append(constr)
             elif not constr:
-                raise RuntimeError(f"Constraint false with provieded value.\n\n\tConstraint: {i}\n\n\tvalues: {vars_dict}")
+                raise RuntimeError(f"Constraint false with provided value.\n\n\tConstraint: {i}\n\n\tvalues: {vars_dict}")
         self.constr = updated
 
     def __iter__(self):

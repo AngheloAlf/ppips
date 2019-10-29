@@ -123,6 +123,7 @@ class IntVar(ComparableElement, ArithmeticVar):
             raise RuntimeError("Domain can't be empty")
         self.domain: Set[Number] = set(domain)
         self.value_instanced: Optional[Number] = None
+        # self.domain_queue: List[Set[Number]] = list()
 
     def __repr__(self) -> str:
         return str(self)

@@ -144,10 +144,20 @@ class IntProblem:
             self.node_consistency()
 
 
-    def solve(self, solutions_type: str="all") -> List[ElementDict]:
-        # first
-        # optimal
-        # all
+    def generate_graph(self) -> Dict[IntVar, Set[IntVar]]:
+        graph: Dict[IntVar, Set[IntVar]] = dict()
+        for i in self.constraints:
+            constr_vars = i.get_vars()
+            if len(constr_vars) >= 2:
+                for j in constr_vars:
+                    if j not in graph:
+                        graph[j] = set()
+                    graph[j] |= constr_vars - {j}
+        return graph
+
+
+    def solve(self, solutions_type: str="first") -> List[ElementDict]:
+        # first, optimal, all
         solutions: List[Dict[Union[IntVar, str], Number]] = list()
         actual: Dict[Union[IntVar, str], Number] = dict()
         vars_list = [IntVarContainer(x) for x in self.vars]
