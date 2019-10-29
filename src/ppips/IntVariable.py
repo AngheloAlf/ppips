@@ -100,8 +100,6 @@ class ArithmeticVar:
     def __mod__(self, other: Element) -> IntVarPow:
         if other == 0:
             raise ZeroDivisionError()
-        if other == 1:
-            return 0
         if isinstance(other, (IntVar, int, float, MultiVar)):
             return IntVarMod(first=self, second=other)
         return NotImplemented
