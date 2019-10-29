@@ -99,8 +99,10 @@ class IntProblem:
             constr_queue: List[VarsComparison] = list(self.get_constraints_for_var(i, 2, 2))
             while len(constr_queue) > 0:
                 popped = constr_queue.pop()
-                j = list(popped.get_vars()-{i})[0]
-                has_solution1, has_solution2, amount1, amount2 = arc_consistency(i, j, popped)
+                popped_vars = list(popped.get_vars())
+                j = popped_vars[0]
+                k = popped_vars[1]
+                has_solution1, has_solution2, amount1, amount2 = arc_consistency(k, j, popped)
 
                 if has_solution1 and has_solution2:
                     # remove constraint if both has_solution
@@ -108,16 +110,16 @@ class IntProblem:
 
                 if has_solution1:
                     # remove variable if has_solution1
-                    var_value = list(i.get_domain())[0]
-                    if i in self.removed_vars:
-                        if self.removed_vars[i] != var_value:
+                    var_value = list(k.get_domain())[0]
+                    if k in self.removed_vars:
+                        if self.removed_vars[k] != var_value:
                             raise RuntimeError("Da fuck?")
                     else:
-                        self.removed_vars[i] = var_value
-                        if i in self.vars: 
-                            self.vars.remove(i)
+                        self.removed_vars[k] = var_value
+                        if k in self.vars: 
+                            self.vars.remove(k)
                 elif amount1 > 0:
-                    constr_queue += list(self.get_constraints_for_var(i, 2, 2))
+                    constr_queue += list(self.get_constraints_for_var(k, 2, 2))
 
                 if has_solution2:
                     # remove variable if has_solution2
