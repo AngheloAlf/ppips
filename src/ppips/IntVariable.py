@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import overload, List, Dict, Set, Union, Optional, Iterable
+from typing import overload, List, Dict, Set, Union, Optional, Collection
 
 from .VarsComparison import VarsComparison, ComparableElement
 from .MultiVar import MultiVar
@@ -12,14 +12,14 @@ from .MultiVar import MultiVar
 Number = Union[int, float]
 
 class ArithmeticVar:
-    def __add__(self, other: ArithElement) -> IntVarAdds:
+    def __add__(self, other: ArithElement) -> AddType:
         if other == 0:
             return self
         if isinstance(other, (IntVar, int, float, MultiVar)):
             return IntVarAdds(first=self, second=other)
         return NotImplemented
     
-    def __radd__(self, other: Element) -> IntVarAdds:
+    def __radd__(self, other: Element) -> AddType:
         if other == 0:
             return self
         if isinstance(other, (IntVar, int, float)):
@@ -27,14 +27,14 @@ class ArithmeticVar:
         return NotImplemented
 
 
-    def __sub__(self, other: ArithElement) -> IntVarAdds:
+    def __sub__(self, other: ArithElement) -> AddType:
         if other == 0:
             return self
         if isinstance(other, (IntVar, int, float, MultiVar)):
             return IntVarAdds(first=self, second=-other)
         return NotImplemented
 
-    def __rsub__(self, other: Element) -> IntVarAdds:
+    def __rsub__(self, other: Element) -> AddType:
         if other == 0:
             return -self
         if isinstance(other, (IntVar, int, float)):
@@ -42,7 +42,7 @@ class ArithmeticVar:
         return NotImplemented
 
 
-    def __mul__(self, other: ArithElement) -> IntVarMult:
+    def __mul__(self, other: ArithElement) -> MultType:
         if other == 0:
             return 0
         if other == 1:
@@ -51,7 +51,7 @@ class ArithmeticVar:
             return IntVarMult(first=self, second=other)
         return NotImplemented
 
-    def __rmul__(self, other: Element) -> IntVarMult:
+    def __rmul__(self, other: Element) -> MultType:
         if other == 0:
             return 0
         if other == 1:
@@ -61,7 +61,7 @@ class ArithmeticVar:
         return NotImplemented
 
 
-    def __truediv__(self, other: ArithElement) -> IntVarDiv:
+    def __truediv__(self, other: ArithElement) -> DivType:
         if other == 0:
             raise ZeroDivisionError()
         if other == 1:
@@ -70,7 +70,7 @@ class ArithmeticVar:
             return IntVarDiv(first=self, second=other)
         return NotImplemented
 
-    def __rtruediv__(self, other: Element) -> IntVarDiv:
+    def __rtruediv__(self, other: Element) -> DivType:
         if other == 0:
             return 0
         if isinstance(other, (IntVar, int, float)):
@@ -78,7 +78,7 @@ class ArithmeticVar:
         return NotImplemented
 
 
-    def __pow__(self, other: Element) -> IntVarPow:
+    def __pow__(self, other: Element) -> PowType:
         if other == 0:
             return 1
         if other == 1:
@@ -87,7 +87,7 @@ class ArithmeticVar:
             return IntVarPow(first=self, second=other)
         return NotImplemented
 
-    def __rpow__(self, other: Element) -> IntVarPow:
+    def __rpow__(self, other: Element) -> PowType:
         if other == 0:
             return 0
         if other == 1:
@@ -97,14 +97,14 @@ class ArithmeticVar:
         return NotImplemented
 
 
-    def __mod__(self, other: Element) -> IntVarPow:
+    def __mod__(self, other: Element) -> ModType:
         if other == 0:
             raise ZeroDivisionError()
         if isinstance(other, (IntVar, int, float, MultiVar)):
             return IntVarMod(first=self, second=other)
         return NotImplemented
 
-    def __rmod__(self, other: Element) -> IntVarPow:
+    def __rmod__(self, other: Element) -> ModType:
         if other == 0:
             return 0
         if isinstance(other, (IntVar, int, float)):
@@ -112,12 +112,12 @@ class ArithmeticVar:
         return NotImplemented
 
 
-    def __neg__(self) -> IntVarMult:
+    def __neg__(self) -> MultType:
         return IntVarMult(first=-1, second=self)
 
 
 class IntVar(ComparableElement, ArithmeticVar):
-    def __init__(self, name: str, domain: Iterable[Number]) -> None:
+    def __init__(self, name: str, domain: Collection[Number]) -> None:
         self.name: str = name
         if len(domain) == 0:
             raise RuntimeError("Domain can't be empty")
@@ -201,7 +201,7 @@ class IntVarAdds(MultiVar, ArithmeticVar):
         return result
 
 
-    def __add__(self, other: ArithElement) -> IntVarAdds:
+    def __add__(self, other: ArithElement) -> AddType:
         if other == 0:
             return self
         if isinstance(other, IntVarAdds):
@@ -210,7 +210,7 @@ class IntVarAdds(MultiVar, ArithmeticVar):
             return IntVarAdds(var_list=self.elements+[other])
         return super().__add__(other)
 
-    def __radd__(self, other: Element) -> IntVarAdds:
+    def __radd__(self, other: Element) -> AddType:
         if other == 0:
             return self
         if isinstance(other, (IntVar, int, float)):
@@ -218,7 +218,7 @@ class IntVarAdds(MultiVar, ArithmeticVar):
         return NotImplemented
 
 
-    def __sub__(self, other: ArithElement) -> IntVarAdds:
+    def __sub__(self, other: ArithElement) -> AddType:
         if other == 0:
             return self
         if isinstance(other, (IntVar, int, float, MultiVar)):
@@ -240,7 +240,7 @@ class IntVarMult(MultiVar, ArithmeticVar):
         return result
 
 
-    def __mul__(self, other: ArithElement) -> IntVarMult:
+    def __mul__(self, other: ArithElement) -> MultType:
         if other == 0:
             return 0
         if other == 1:
@@ -251,7 +251,7 @@ class IntVarMult(MultiVar, ArithmeticVar):
             return IntVarMult(var_list=self.elements+other.elements)
         return super().__mul__(other)
 
-    def __rmul__(self, other: Element) -> IntVarMult:
+    def __rmul__(self, other: Element) -> MultType:
         if other == 0:
             return 0
         if other == 1:
@@ -261,7 +261,7 @@ class IntVarMult(MultiVar, ArithmeticVar):
         return NotImplemented
 
 
-    def __neg__(self) -> IntVarMult:
+    def __neg__(self) -> MultType:
         self.elements.insert(0, -1)
         return self
 
@@ -285,7 +285,7 @@ class IntVarDiv(MultiVar, ArithmeticVar):
         return result
 
 
-    def __truediv__(self, other: ArithElement) -> IntVarDiv:
+    def __truediv__(self, other: ArithElement) -> DivType:
         if other == 0:
             raise ZeroDivisionError()
         if other == 1:
@@ -365,5 +365,11 @@ class IntVarContainer:
 
 
 Element = Union[IntVar, Number]
-ArithElement = Union[Element, MultiVar]
+ArithElement = Union[Element, ArithmeticVar]
 ElementDict = Dict[Union[IntVar, str], Number]
+
+AddType = Union[ArithmeticVar, Number, IntVarAdds]
+MultType = Union[ArithmeticVar, Number, IntVarMult]
+DivType = Union[ArithmeticVar, Number, IntVarDiv]
+PowType = Union[ArithmeticVar, Number, IntVarPow]
+ModType = Union[ArithmeticVar, Number, IntVarMod]

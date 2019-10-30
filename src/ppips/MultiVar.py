@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Union
+
 from .VarsComparison import VarsComparison, ComparableElement
 
 class MultiVar(ComparableElement):
@@ -37,11 +39,11 @@ class MultiVar(ComparableElement):
     def __str__(self):
         return f"<{self.__class__.__name__}: {self.get_expr(True)}>"
     
-    def evaluate(self, vars_dict:dict):
+    def evaluate(self, vars_dict: dict):
         raise RuntimeError("This class should not be instanciated.")
         return 0
     
-    def __call__(self, vars_dict:dict):
+    def __call__(self, vars_dict: dict):
         return self.evaluate(vars_dict)
 
     def __iter__(self):

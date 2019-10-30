@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import overload, List, Tuple, Dict, Set, Union
+from typing import overload, List, Tuple, Dict, Set, Union, Optional
 
 from .IntVariable import IntVar, IntVarContainer
 from .MultiVar import MultiVar
@@ -19,8 +19,8 @@ class IntProblem:
         self.name = name
         self.vars = list(vars)
         self.constraints = Constraints()
-        self.objective: Union[Optimize, None] = None
-        self.removed_vars: Dict[IntVar, Number] = dict()
+        self.objective: Optional[Optimize] = None
+        self.removed_vars: Dict[Union[IntVar, str], Number] = dict()
 
     def get_expr(self) -> str:
         return self.name
@@ -174,7 +174,9 @@ class IntProblem:
         
         if len(vars_list) == 1:
             if solutions_type == "optimal":
-                actual_value: Number = self.evaluate(actual)[1]
+                assert self.objective is not None
+                actual_value = self.evaluate(actual)[1]
+                assert isinstance(actual_value, (int, float))
                 if self.objective.is_optimal(actual_value):
                     solutions.append(actual)
                 elif self.objective.is_better_than_optimal(actual_value):
