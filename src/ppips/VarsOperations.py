@@ -2,43 +2,43 @@
 
 from __future__ import annotations
 
-from typing import overload, List, Dict, Set, Union, Optional, Collection
+from typing import overload, List, Dict, Set, Union, Optional, Collection, Any
 
-from .VarsComparison import VarsComparison, ComparableElement
-from .MultiVar import MultiVar
+from .VarsComparison import VarsComparison
 
 # https://docs.python.org/3/reference/datamodel.html
 
 Number = Union[int, float]
 
-class ArithmeticVar:
+
+class ArithmeticElement:
     def __add__(self, other: ArithElement) -> AddType:
         if other == 0:
             return self
-        if isinstance(other, (IntVar, int, float, MultiVar)):
-            return IntVarAdds(first=self, second=other)
+        if isinstance(other, (ArithmeticElement, int, float)):
+            return VarAdds(first=self, second=other)
         return NotImplemented
     
     def __radd__(self, other: Element) -> AddType:
         if other == 0:
             return self
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarAdds(first=other, second=self)
+        if isinstance(other, (int, float)):
+            return VarAdds(first=other, second=self)
         return NotImplemented
 
 
     def __sub__(self, other: ArithElement) -> AddType:
         if other == 0:
             return self
-        if isinstance(other, (IntVar, int, float, MultiVar)):
-            return IntVarAdds(first=self, second=-other)
+        if isinstance(other, (ArithmeticElement, int, float)):
+            return VarAdds(first=self, second=-other)
         return NotImplemented
 
     def __rsub__(self, other: Element) -> AddType:
         if other == 0:
             return -self
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarAdds(first=other, second=-self)
+        if isinstance(other, (int, float)):
+            return VarAdds(first=other, second=-self)
         return NotImplemented
 
 
@@ -47,8 +47,8 @@ class ArithmeticVar:
             return 0
         if other == 1:
             return self
-        if isinstance(other, (IntVar, int, float, MultiVar)):
-            return IntVarMult(first=self, second=other)
+        if isinstance(other, (ArithmeticElement, int, float)):
+            return VarMult(first=self, second=other)
         return NotImplemented
 
     def __rmul__(self, other: Element) -> MultType:
@@ -56,8 +56,8 @@ class ArithmeticVar:
             return 0
         if other == 1:
             return self
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarMult(first=other, second=self)
+        if isinstance(other, (int, float)):
+            return VarMult(first=other, second=self)
         return NotImplemented
 
 
@@ -66,15 +66,15 @@ class ArithmeticVar:
             raise ZeroDivisionError()
         if other == 1:
             return self
-        if isinstance(other, (IntVar, int, float, MultiVar)):
-            return IntVarDiv(first=self, second=other)
+        if isinstance(other, (ArithmeticElement, int, float)):
+            return VarDiv(first=self, second=other)
         return NotImplemented
 
     def __rtruediv__(self, other: Element) -> DivType:
         if other == 0:
             return 0
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarDiv(first=other, second=self)
+        if isinstance(other, (int, float)):
+            return VarDiv(first=other, second=self)
         return NotImplemented
 
 
@@ -83,8 +83,8 @@ class ArithmeticVar:
             return 1
         if other == 1:
             return self
-        if isinstance(other, (IntVar, int, float, MultiVar)):
-            return IntVarPow(first=self, second=other)
+        if isinstance(other, (ArithmeticElement, int, float)):
+            return VarPow(first=self, second=other)
         return NotImplemented
 
     def __rpow__(self, other: Element) -> PowType:
@@ -92,47 +92,73 @@ class ArithmeticVar:
             return 0
         if other == 1:
             return 1
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarPow(first=other, second=self)
+        if isinstance(other, (int, float)):
+            return VarPow(first=other, second=self)
         return NotImplemented
 
 
     def __mod__(self, other: Element) -> ModType:
         if other == 0:
             raise ZeroDivisionError()
-        if isinstance(other, (IntVar, int, float, MultiVar)):
-            return IntVarMod(first=self, second=other)
+        if isinstance(other, (ArithmeticElement, int, float)):
+            return VarMod(first=self, second=other)
         return NotImplemented
 
     def __rmod__(self, other: Element) -> ModType:
         if other == 0:
             return 0
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarMod(first=other, second=self)
+        if isinstance(other, (ArithmeticElement, int, float)):
+            return VarMod(first=other, second=self)
         return NotImplemented
 
 
     def __neg__(self) -> MultType:
-        return IntVarMult(first=-1, second=self)
+        return VarMult(first=-1, second=self)
 
 
-class IntVar(ComparableElement, ArithmeticVar):
-    def __init__(self, name: str, domain: Collection[Number]) -> None:
+    def __lt__(self, other):
+        if(isinstance(other, VarsComparison)):
+            raise RuntimeError()
+        return VarsComparison(self, other, "<")
+    def __le__(self, other):
+        if(isinstance(other, VarsComparison)):
+            raise RuntimeError()
+        return VarsComparison(self, other, "<=")
+    def __eq__(self, other):
+        if(isinstance(other, VarsComparison)):
+            raise RuntimeError()
+        return VarsComparison(self, other, "==")
+    def __ne__(self, other):
+        if(isinstance(other, VarsComparison)):
+            raise RuntimeError()
+        return VarsComparison(self, other, "!=")
+    def __gt__(self, other):
+        if(isinstance(other, VarsComparison)):
+            raise RuntimeError()
+        return VarsComparison(self, other, ">")
+    def __ge__(self, other):
+        if(isinstance(other, VarsComparison)):
+            raise RuntimeError()
+        return VarsComparison(self, other, ">=")
+
+    def __bool__(self) -> bool:
+        return False
+
+    
+    def get_expr(self, disable_last_parenthesis: bool=False) -> str:
+        raise NotImplementedError()
+    def __call__(self, value) -> ArithElement:
+        raise NotImplementedError()
+
+
+class AbstractVar(ArithmeticElement):
+    def __init__(self, name: str) -> None:
         self.name: str = name
-        if len(domain) == 0:
-            raise RuntimeError("Domain can't be empty")
-        self.domain: Set[Number] = set(domain)
-        self.value_instanced: Optional[Number] = None
-        # self.domain_queue: List[Set[Number]] = list()
 
     def __repr__(self) -> str:
         return str(self)
-        expr = f"<{self.__class__.__name__}: {self.get_expr()!r}>\n\t\\Domain: {self.domain}/"
-        if self.value_instanced is not None:
-            expr += f"\n\t\\Instanced: {self.value_instanced}/"
-        return expr
 
-    def get_expr(self, *params) -> str:
+    def get_expr(self, disable_last_parenthesis: bool=False) -> str:
         return self.name
 
     def __str__(self):
@@ -141,41 +167,21 @@ class IntVar(ComparableElement, ArithmeticVar):
     def __hash__(self):
         return hash(self.name)
 
-    def get_domain(self) -> Set[Number]:
-        return self.domain
-    
-    def remove_from_domain(self, value: Number) -> None:
-        self.domain.remove(value)
-    
-    def instance_value(self, value: Number) -> None:
-        if not self.is_valid(value):
-            raise RuntimeError("Value not in domain")
-        self.value_instanced = value
-    
-    def de_instance(self) -> None:
-        self.value_instanced = None
-
     def __call__(self, value: Union[Number, ElementDict] = None) -> Element:
-        if value is None and self.value_instanced is None:
+        if value is None:
             return self
         elif isinstance(value, (int, float)):
-            if not self.is_valid(value):
-                raise RuntimeError(f"Value must be part of {self.name}'s domain.")
+            self.validate(value)
             return value
         elif isinstance(value, dict) and self in value:
             out = value[self]
-            if not self.is_valid(out):
-                raise RuntimeError(f"Value must be part of {self.name}'s domain.")
+            self.validate(out)
             return out
-        elif self.value_instanced is not None:
-            if not self.is_valid(self.value_instanced):
-                raise RuntimeError(f"Value must be part of {self.name}'s domain.")
-            return self.value_instanced
         else:
             return self
 
-    def is_valid(self, value: Union[Number, ElementDict]) -> bool:
-        return value in self.domain
+    def validate(self, value: Number) -> None:
+        raise NotImplementedError()
 
     def __bool__(self) -> bool:
         return True
@@ -183,11 +189,59 @@ class IntVar(ComparableElement, ArithmeticVar):
     def __iter__(self):
         yield self
     
-    def is_equal(self, other: IntVar) -> bool:
+    def is_equal(self, other: AbstractVar) -> bool:
         return self.name == other.name
 
 
-class IntVarAdds(MultiVar, ArithmeticVar):
+class MultiVar(ArithmeticElement):
+    def __init__(self, simbol: str, /, var_list: list=None, first=None, second=None, parenthesis: bool=True) -> None:
+        self.simbol = simbol
+        self.parenthesis = parenthesis
+        if first is not None and second is not None:
+            if var_list is not None:
+                raise RuntimeError()
+            self.elements = [first, second]
+        elif var_list is not None:
+            if first is not None or second is not None:
+                raise RuntimeError()
+            self.elements = list(var_list)
+        else:
+            raise RuntimeError()
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(var_list={self.elements!r})"
+
+    def get_expr(self, disable_last_parenthesis=False) -> str:
+        result = []
+        for i in self.elements:
+            if type(i) in (int, float):
+                result.append(str(i))
+            else:
+                result.append(i.get_expr())
+        expression = self.simbol.join(result)
+        if self.parenthesis and not disable_last_parenthesis:
+            return f"({expression})"
+        return expression
+
+    def __str__(self):
+        return f"<{self.__class__.__name__}: {self.get_expr(True)}>"
+    
+    def evaluate(self, vars_dict: ElementDict):
+        raise NotImplementedError()
+    
+    def __call__(self, vars_dict: ElementDict) -> ArithElement:
+        return self.evaluate(vars_dict)
+
+    def __iter__(self):
+        for i in self.elements:
+            if isinstance(i, (int, float)):
+                yield i
+            else:
+                for j in i:
+                    yield j
+
+
+class VarAdds(MultiVar):
     def __init__(self, /, var_list:list=None, first=None, second=None) -> None:
         super().__init__(" + ", var_list=var_list, first=first, second=second)
 
@@ -204,29 +258,29 @@ class IntVarAdds(MultiVar, ArithmeticVar):
     def __add__(self, other: ArithElement) -> AddType:
         if other == 0:
             return self
-        if isinstance(other, IntVarAdds):
-            return IntVarAdds(var_list=self.elements+other.elements)
-        elif isinstance(other, (IntVar, int, float, MultiVar)):
-            return IntVarAdds(var_list=self.elements+[other])
+        if isinstance(other, VarAdds):
+            return VarAdds(var_list=self.elements+other.elements)
+        elif isinstance(other, (ArithmeticElement, int, float)):
+            return VarAdds(var_list=self.elements+[other])
         return super().__add__(other)
 
     def __radd__(self, other: Element) -> AddType:
         if other == 0:
             return self
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarAdds(var_list=[other]+self.elements)
+        if isinstance(other, (AbstractVar, int, float)):
+            return VarAdds(var_list=[other]+self.elements)
         return NotImplemented
 
 
     def __sub__(self, other: ArithElement) -> AddType:
         if other == 0:
             return self
-        if isinstance(other, (IntVar, int, float, MultiVar)):
-            return IntVarAdds(var_list=self.elements+[-other])
+        if isinstance(other, (ArithmeticElement, int, float)):
+            return VarAdds(var_list=self.elements+[-other])
         return NotImplemented
 
 
-class IntVarMult(MultiVar, ArithmeticVar):
+class VarMult(MultiVar):
     def __init__(self, /, var_list:list=None, first=None, second=None) -> None:
         super().__init__("*", var_list=var_list, first=first, second=second, parenthesis=False)
 
@@ -245,10 +299,10 @@ class IntVarMult(MultiVar, ArithmeticVar):
             return 0
         if other == 1:
             return self
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarMult(var_list=self.elements+[other])
-        elif isinstance(other, IntVarMult):
-            return IntVarMult(var_list=self.elements+other.elements)
+        if isinstance(other, (AbstractVar, int, float)):
+            return VarMult(var_list=self.elements+[other])
+        elif isinstance(other, VarMult):
+            return VarMult(var_list=self.elements+other.elements)
         return super().__mul__(other)
 
     def __rmul__(self, other: Element) -> MultType:
@@ -256,8 +310,8 @@ class IntVarMult(MultiVar, ArithmeticVar):
             return 0
         if other == 1:
             return self
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarMult(var_list=[other]+self.elements)
+        if isinstance(other, (AbstractVar, int, float)):
+            return VarMult(var_list=[other]+self.elements)
         return NotImplemented
 
 
@@ -266,7 +320,7 @@ class IntVarMult(MultiVar, ArithmeticVar):
         return self
 
 
-class IntVarDiv(MultiVar, ArithmeticVar):
+class VarDiv(MultiVar):
     def __init__(self, /, var_list:list=None, first=None, second=None) -> None:
         super().__init__("/", var_list=var_list, first=first, second=second)
 
@@ -290,14 +344,14 @@ class IntVarDiv(MultiVar, ArithmeticVar):
             raise ZeroDivisionError()
         if other == 1:
             return self
-        if isinstance(other, (IntVar, int, float)):
-            return IntVarDiv(var_list=self.elements+[other])
-        elif isinstance(other, IntVarDiv):
-            return IntVarDiv(var_list=self.elements+other.elements)
+        if isinstance(other, (AbstractVar, int, float)):
+            return VarDiv(var_list=self.elements+[other])
+        elif isinstance(other, VarDiv):
+            return VarDiv(var_list=self.elements+other.elements)
         return super().__truediv__(other)
 
 
-class IntVarPow(MultiVar, ArithmeticVar):
+class VarPow(MultiVar):
     def __init__(self, /, var_list:list=None, first=None, second=None) -> None:
         super().__init__("**", var_list=var_list, first=first, second=second)
 
@@ -316,7 +370,7 @@ class IntVarPow(MultiVar, ArithmeticVar):
         return result
 
 
-class IntVarMod(MultiVar, ArithmeticVar):
+class VarMod(MultiVar):
     def __init__(self, /, var_list: list=None, first=None, second=None) -> None:
         super().__init__("%", var_list=var_list, first=first, second=second)
 
@@ -335,41 +389,13 @@ class IntVarMod(MultiVar, ArithmeticVar):
         return result
 
 
-class IntVarContainer:
-    def __init__(self, var: IntVar) -> None:
-        self.var = var
-        self.domain = list(var.domain)
-        self.pos = 0
-    
-    def instance_next(self) -> bool:
-        if self.pos >= len(self.domain):
-            return False
-        self.var.instance_value(self.domain[self.pos])
-        self.pos += 1
-        return True
-    
-    def de_instance(self) -> None:
-        self.var.de_instance()
-        return
-    
-    def reset_instances(self) -> None:
-        self.de_instance()
-        self.pos = 0
-        return
-    
-    def get_var(self) -> IntVar:
-        return self.var
-    
-    def get_instanced(self) -> Element:
-        return self.var()
+Element = Union[AbstractVar, Number]
+ArithElement = Union[ArithmeticElement, Number]
 
+ElementDict = Dict[Union[AbstractVar, str], Number]
 
-Element = Union[IntVar, Number]
-ArithElement = Union[Element, ArithmeticVar]
-ElementDict = Dict[Union[IntVar, str], Number]
-
-AddType = Union[ArithmeticVar, Number, IntVarAdds]
-MultType = Union[ArithmeticVar, Number, IntVarMult]
-DivType = Union[ArithmeticVar, Number, IntVarDiv]
-PowType = Union[ArithmeticVar, Number, IntVarPow]
-ModType = Union[ArithmeticVar, Number, IntVarMod]
+AddType = Union[ArithmeticElement, Number, VarAdds]
+MultType = Union[ArithmeticElement, Number, VarMult]
+DivType = Union[ArithmeticElement, Number, VarDiv]
+PowType = Union[ArithmeticElement, Number, VarPow]
+ModType = Union[ArithmeticElement, Number, VarMod]

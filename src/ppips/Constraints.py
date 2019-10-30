@@ -4,14 +4,13 @@ from __future__ import annotations
 
 from typing import overload, List, Dict, Union
 
-from .IntVariable import IntVar
-from .MultiVar import MultiVar
+from .VarsOperations import AbstractVar
 from .VarsComparison import VarsComparison
 from .Optimize import Optimize, Maximize, Minimize
 
 Number = Union[int, float]
-Element = Union[IntVar, Number]
-ElementDict = Dict[Union[IntVar, str], Number]
+Element = Union[AbstractVar, Number]
+ElementDict = Dict[Union[AbstractVar, str], Number]
 
 class Constraints:
     def __init__(self) -> None:

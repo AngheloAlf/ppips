@@ -4,15 +4,18 @@ from __future__ import annotations
 
 from typing import overload, List, Tuple, Dict, Set, Union, Optional
 
-from .IntVariable import IntVar, IntVarContainer
-from .MultiVar import MultiVar
+from .Variables import IntVar, IntVarContainer
+from .VarsOperations import ArithmeticElement, AbstractVar
 from .VarsComparison import VarsComparison
 from .Constraints import Constraints
 from .Optimize import Optimize, Maximize, Minimize
 
 Number = Union[int, float]
 Element = Union[IntVar, Number]
-ElementDict = Dict[Union[IntVar, str], Number]
+# ElementDict = Dict[Union[IntVar, str], Number]
+ElementDict = Dict[Union[AbstractVar, str], Number]
+ArithElement = Union[ArithmeticElement, Number]
+VarsGraph = Dict[IntVar, Set[IntVar]]
 
 class IntProblem:
     def __init__(self, name: str, vars: List[IntVar]) -> None:
@@ -20,7 +23,7 @@ class IntProblem:
         self.vars = list(vars)
         self.constraints = Constraints()
         self.objective: Optional[Optimize] = None
-        self.removed_vars: Dict[Union[IntVar, str], Number] = dict()
+        self.removed_vars: ElementDict = dict()
 
     def get_expr(self) -> str:
         return self.name
@@ -33,10 +36,15 @@ class IntProblem:
 
         return f"<{self.__class__.__name__}: {self.get_expr()!r}>{obje}\n\n\t{rest}\n\n\t{vars_}\n"
 
-    def __iadd__(self, other: VarsComparison) -> IntProblem:
+    def __iadd__(self, other: Union[VarsComparison, Number]) -> IntProblem:
         if isinstance(other, VarsComparison):
             self.constraints += other
             return self
+        if isinstance(other, bool):
+            if other:
+                print("The constraint", other, "is always true. Discarding.")
+            else:
+                raise RuntimeError("Added a constraint that is always false.")
         return NotImplemented
 
     def __imatmul__(self, other: Optimize) -> IntProblem:
@@ -47,7 +55,7 @@ class IntProblem:
             return self
         return NotImplemented
 
-    def evaluate(self, vars_dict: ElementDict) -> Tuple[bool, Union[Element, MultiVar, None]]:
+    def evaluate(self, vars_dict: ElementDict) -> Tuple[bool, Optional[ArithElement]]:
         valid = self.constraints(vars_dict)
         if not valid:
             return (False, None)
@@ -144,8 +152,8 @@ class IntProblem:
             self.node_consistency()
 
 
-    def generate_graph(self) -> Dict[IntVar, Set[IntVar]]:
-        graph: Dict[IntVar, Set[IntVar]] = dict()
+    def generate_graph(self) -> VarsGraph:
+        graph: VarsGraph = dict()
         for i in self.constraints:
             constr_vars = i.get_vars()
             if len(constr_vars) >= 2:
@@ -156,7 +164,7 @@ class IntProblem:
         return graph
 
 
-    def _recursive_solver(self, vars_list: List[IntVarContainer], solutions: List[Dict[Union[IntVar, str], Number]], graph: Dict[IntVar, Set[IntVar]], solutions_type: str, actual: Dict[Union[IntVar, str], Number]=dict()):
+    def _recursive_solver(self, vars_list: List[IntVarContainer], solutions: List[ElementDict], graph: VarsGraph, solutions_type: str, actual: ElementDict=dict()):
         assert(len(vars_list) > 0)
 
         var = vars_list[0]
@@ -208,7 +216,7 @@ class IntProblem:
             raise RuntimeError("Invalid parameter for solve.")
         if solutions_type == "optimal" and self.objective is None:
             raise RuntimeError("Can't solve for optimal without objective.")
-        solutions: List[Dict[Union[IntVar, str], Number]] = list()
+        solutions: List[ElementDict] = list()
         vars_list = [IntVarContainer(x) for x in self.vars]
 
         self._recursive_solver(vars_list, solutions, self.generate_graph(), solutions_type)

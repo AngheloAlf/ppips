@@ -49,7 +49,7 @@ class VarsComparison:
         elif self.comp_type == ">=":
             return left >= right
         else:
-            raise RuntimeError()
+            raise RuntimeError("Undefined comparison.")
 
     def __call__(self, vars_dict) -> Union[bool, VarsComparison]:
         return self.evaluate(vars_dict)
@@ -75,32 +75,3 @@ class VarsComparison:
                         vars.add(r)
         return vars
 
-
-class ComparableElement:
-    def __lt__(self, other):
-        if(isinstance(other, VarsComparison)):
-            raise RuntimeError()
-        return VarsComparison(self, other, "<")
-    def __le__(self, other):
-        if(isinstance(other, VarsComparison)):
-            raise RuntimeError()
-        return VarsComparison(self, other, "<=")
-    def __eq__(self, other):
-        if(isinstance(other, VarsComparison)):
-            raise RuntimeError()
-        return VarsComparison(self, other, "==")
-    def __ne__(self, other):
-        if(isinstance(other, VarsComparison)):
-            raise RuntimeError()
-        return VarsComparison(self, other, "!=")
-    def __gt__(self, other):
-        if(isinstance(other, VarsComparison)):
-            raise RuntimeError()
-        return VarsComparison(self, other, ">")
-    def __ge__(self, other):
-        if(isinstance(other, VarsComparison)):
-            raise RuntimeError()
-        return VarsComparison(self, other, ">=")
-
-    def __bool__(self) -> bool:
-        return False
