@@ -36,11 +36,36 @@ class Optimize:
             self.objective = self.objective(vars_dict)
 
 
-
 class Minimize(Optimize):
     def __init__(self, objective: Union[IntVar, MultiVar]) -> None:
         super().__init__(objective)
+        self.last_optimal = float("inf")
+    
+    def is_optimal(self, other: Number) -> bool:
+        return other == self.last_optimal
+
+    def is_better_than_optimal(self, other: Number) -> bool:
+        if other < self.last_optimal:
+            self.last_optimal = other
+            return True
+        return False
+    
+    def reset_optimal(self):
+        self.last_optimal = float("inf")
 
 class Maximize(Optimize):
     def __init__(self, objective: Union[IntVar, MultiVar]) -> None:
         super().__init__(objective)
+        self.last_optimal = -float("inf")
+    
+    def is_optimal(self, other: Number) -> bool:
+        return other == self.last_optimal
+
+    def is_better_than_optimal(self, other: Number) -> bool:
+        if other > self.last_optimal:
+            self.last_optimal = other
+            return True
+        return False
+    
+    def reset_optimal(self):
+        self.last_optimal = -float("inf")

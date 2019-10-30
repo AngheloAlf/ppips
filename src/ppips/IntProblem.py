@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import overload, List, Tuple, Dict, Union
+from typing import overload, List, Tuple, Dict, Set, Union
 
 from .IntVariable import IntVar, IntVarContainer
 from .MultiVar import MultiVar
@@ -156,65 +156,71 @@ class IntProblem:
         return graph
 
 
+    def _recursive_solver(self, vars_list: List[IntVarContainer], solutions: List[Dict[Union[IntVar, str], Number]], graph: Dict[IntVar, Set[IntVar]], solutions_type: str, actual: Dict[Union[IntVar, str], Number]=dict()):
+        assert(len(vars_list) > 0)
+
+        var = vars_list[0]
+        was_instanced = var.instance_next()
+        if not was_instanced:
+            var.reset_instances()
+            return False
+
+        if not self.constraints({}):
+            return True
+
+        instance = var.get_instanced()
+        if isinstance(instance, (int, float)):
+            actual[var.get_var()] = instance
+        
+        if len(vars_list) == 1:
+            if solutions_type == "optimal":
+                actual_value: Number = self.evaluate(actual)[1]
+                if self.objective.is_optimal(actual_value):
+                    solutions.append(actual)
+                elif self.objective.is_better_than_optimal(actual_value):
+                    solutions.clear()
+                    solutions.append(actual)
+            else:
+                solutions.append(actual)
+                if solutions_type == "first":
+                    return False
+            return True
+        
+        new_actual = dict(actual)
+        stay = self._recursive_solver(vars_list[1:], solutions, graph, solutions_type, new_actual)
+        if solutions_type == "first" and len(solutions) == 1:
+            return False
+        while stay:
+            new_actual = dict(new_actual)
+            stay = self._recursive_solver(vars_list[1:], solutions, graph, solutions_type, new_actual)
+            if solutions_type == "first" and len(solutions) == 1:
+                return False
+
+        new_actual = dict(new_actual)
+        return self._recursive_solver(vars_list, solutions, graph, solutions_type, new_actual)
+
+
     def solve(self, solutions_type: str="first") -> List[ElementDict]:
         # first, optimal, all
+        if solutions_type not in ("first", "optimal", "all"):
+            raise RuntimeError("Invalid parameter for solve.")
+        if solutions_type == "optimal" and self.objective is None:
+            raise RuntimeError("Can't solve for optimal without objective.")
         solutions: List[Dict[Union[IntVar, str], Number]] = list()
-        actual: Dict[Union[IntVar, str], Number] = dict()
         vars_list = [IntVarContainer(x) for x in self.vars]
-        i = 0
-        maxi = -float("inf")
-        mini = float("inf")
-        while i >= 0 and i < len(vars_list):
-            var = vars_list[i]
-            was_instanced = var.instance_next()
-            if not was_instanced:
-                var.reset_instances()
-                i -= 1
-                continue
-            instance = var.get_instanced()
-            if isinstance(instance, (int, float)):
-                actual[var.get_var()] = instance
-            i += 1
-            if self.constraints({}):
-                if i == len(vars_list):
-                    if solutions_type == "first":
-                        solutions.append(actual)
-                        break
-                    elif solutions_type == "optimal":
-                        actual_value: Number = self.evaluate(actual)[1]
-                        if isinstance(self.objective, Maximize):
-                            if actual_value == maxi:
-                                solutions.append(actual)
-                            elif actual_value > maxi:
-                                solutions = [actual]
-                                maxi = actual_value
-                        elif isinstance(self.objective, Minimize):
-                            if actual_value == mini:
-                                solutions.append(actual)
-                            elif actual_value < mini:
-                                solutions = [actual]
-                                mini = actual_value
-                    elif solutions_type == "all":
-                        solutions.append(actual)
-                    actual = dict(actual)
-                    var.de_instance()
-                    i -= 1
-            else:
-                i -= 1
-                if var.get_var() in actual:
-                    del actual[var.get_var()]
+
+        self._recursive_solver(vars_list, solutions, self.generate_graph(), solutions_type)
 
         for x in self.vars:
             x.de_instance()
 
         if solutions_type == "all":
-            if isinstance(self.objective, Maximize):
-                solutions.sort(key=lambda x: self.evaluate(x)[1], reverse=True)
-            elif isinstance(self.objective, Minimize):
-                solutions.sort(key=lambda x: self.evaluate(x)[1])
+            if self.objective is not None:
+                solutions.sort(key=lambda x: self.evaluate(x)[1], reverse=isinstance(self.objective, Maximize))
 
         solutions = [{**x, **self.removed_vars} for x in solutions]
         return solutions
+
 
 def node_consistency(var: IntVar, constr: VarsComparison) -> Tuple[bool, int]:
     """Apply node consistency to the var, and returns True if just only 1 element is left in it's domain, and the amount of removed values."""
