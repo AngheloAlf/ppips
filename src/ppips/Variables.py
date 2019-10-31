@@ -9,7 +9,7 @@ from .VarsOperations import AbstractVar
 # https://docs.python.org/3/reference/datamodel.html
 
 Number = Union[int, float]
-
+ElementDict = Dict[Union[AbstractVar, str], Number]
 
 class IntVar(AbstractVar):
     def __init__(self, name: str, domain: Collection[Number]) -> None:
@@ -59,7 +59,6 @@ class IntVar(AbstractVar):
         if value not in self.domain:
             raise ValueError(f"Value must be part of {self.name}'s domain.")
 
-
 class IntVarContainer:
     def __init__(self, var: IntVar) -> None:
         self.var = var
@@ -86,8 +85,8 @@ class IntVarContainer:
         return self.var
     
     def get_instanced(self) -> Element:
-        return self.var()
-
+        inst = self.var()
+        assert isinstance(inst, (int, float))
+        return inst
 
 Element = Union[IntVar, Number]
-ElementDict = Dict[Union[AbstractVar, str], Number]
