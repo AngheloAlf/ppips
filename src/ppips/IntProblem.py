@@ -164,21 +164,21 @@ class IntProblem:
         return graph
 
 
-    def _recursive_solver(self, vars_list: List[IntVarContainer], solutions: List[ElementDict], graph: VarsGraph, solutions_type: str, actual: ElementDict=dict()):
+    def _recursive_solver(self, vars_list: List[IntVarContainer], solutions: List[ElementDict], graph: VarsGraph, solutions_type: str, options: Dict[str, bool], actual: ElementDict=dict()):
         assert(len(vars_list) > 0)
 
-        var = vars_list[0]
-        was_instanced = var.instance_next()
+        var: IntVarContainer = vars_list[0]
+        was_instanced: bool = var.instance_next()
         if not was_instanced:
             var.reset_instances()
-            return False
+            if "gbj" in options and options["gbj"]:
+                return False, graph[var.get_var()]
+            return False, None
 
         if not self.constraints({}):
-            return True
+            return True, None
 
-        instance = var.get_instanced()
-        if isinstance(instance, (int, float)):
-            actual[var.get_var()] = instance
+        actual[var.get_var()] = var.get_instanced()
         
         if len(vars_list) == 1:
             if solutions_type == "optimal":
@@ -193,33 +193,47 @@ class IntProblem:
             else:
                 solutions.append(actual)
                 if solutions_type == "first":
-                    return False
-            return True
+                    return False, None
+            return True, None
         
-        new_actual = dict(actual)
-        stay = self._recursive_solver(vars_list[1:], solutions, graph, solutions_type, new_actual)
+        new_actual: ElementDict = dict(actual)
+        stay, g_jump = self._recursive_solver(vars_list[1:], solutions, graph, solutions_type, options, new_actual)
         if solutions_type == "first" and len(solutions) == 1:
-            return False
+            return False, None
+        if "gbj" in options and options["gbj"] and g_jump is not None:
+            if var.get_var() not in g_jump:
+                var.de_instance()
+                return False, g_jump
         while stay:
             new_actual = dict(new_actual)
-            stay = self._recursive_solver(vars_list[1:], solutions, graph, solutions_type, new_actual)
+            stay, g_jump = self._recursive_solver(vars_list[1:], solutions, graph, solutions_type, options, new_actual)
             if solutions_type == "first" and len(solutions) == 1:
-                return False
+                return False, None
+            if "gbj" in options and options["gbj"] and g_jump is not None:
+                if var.get_var() not in g_jump:
+                    var.de_instance()
+                    return False, g_jump
 
         new_actual = dict(new_actual)
-        return self._recursive_solver(vars_list, solutions, graph, solutions_type, new_actual)
+        return self._recursive_solver(vars_list, solutions, graph, solutions_type, options, new_actual)
+
+    def recursive_solver(self, vars_list: List[IntVarContainer], solutions: List[ElementDict], graph: VarsGraph, solutions_type: str, options: Dict[str, bool]):
+        stay, g_jump = True, None
+        while stay:
+            stay, g_jump = self._recursive_solver(vars_list, solutions, graph, solutions_type, options)
 
 
-    def solve(self, solutions_type: str="first") -> List[ElementDict]:
+    def solve(self, solutions_type: str="first", options: Dict[str, bool]=dict()) -> List[ElementDict]:
         # first, optimal, all
         if solutions_type not in ("first", "optimal", "all"):
-            raise RuntimeError("Invalid parameter for solve.")
+            raise ValueError("Invalid parameter for solve.")
         if solutions_type == "optimal" and self.objective is None:
             raise RuntimeError("Can't solve for optimal without objective.")
         solutions: List[ElementDict] = list()
         vars_list = [IntVarContainer(x) for x in self.vars]
+        graph = self.generate_graph()
 
-        self._recursive_solver(vars_list, solutions, self.generate_graph(), solutions_type)
+        self.recursive_solver(vars_list, solutions, graph, solutions_type, options)
 
         for x in self.vars:
             x.de_instance()
