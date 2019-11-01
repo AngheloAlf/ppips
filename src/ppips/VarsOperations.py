@@ -113,7 +113,7 @@ class ArithmeticElement:
         return NotImplemented
 
 
-    def __neg__(self) -> MultType:
+    def __neg__(self) -> ArithmeticElement:
         return VarMult(first=-1, second=self)
 
 
@@ -167,6 +167,24 @@ class AbstractVar(ArithmeticElement):
 
     def __hash__(self):
         return hash(self.name)
+
+
+    def __add__(self, other: ArithElement) -> AddType:
+        if other == 0:
+            return self
+        if isinstance(other, VarAdds):
+            return VarAdds(var_list=[self]+other.elements)
+        return super().__add__(other)
+
+
+    def __sub__(self, other: ArithElement) -> AddType:
+        if other == 0:
+            return self
+        if isinstance(other, VarAdds):
+            other = -other
+            return VarAdds(var_list=[self]+other.elements)
+        return super().__sub__(other)
+
 
     def __call__(self, value: Union[Number, ElementDict] = None) -> Element:
         if value is None:
@@ -321,6 +339,14 @@ class VarAdds(MultiVar):
             return VarAdds(var_list=self.elements+[-other])
         return NotImplemented
 
+
+    def __neg__(self) -> ArithmeticElement:
+        aux_list = list()
+        for i in self.elements:
+            aux_list.append(-i)
+        return VarAdds(var_list=aux_list)
+
+
     def distrubute_mul(self) -> MultiVar:
         new_elements = list()
         for i in self.elements:
@@ -415,10 +441,11 @@ class VarMult(MultiVar):
         return NotImplemented
 
 
-    def __neg__(self) -> MultType:
+    def __neg__(self) -> ArithmeticElement:
         if -1 in self.elements:
             aux_list = list(self.elements)
             aux_list.remove(-1)
+            assert len(aux_list) != 0
             if len(aux_list) == 1:
                 return aux_list[0]
             return VarMult(var_list=aux_list)
