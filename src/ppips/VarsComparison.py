@@ -117,10 +117,9 @@ class VarsComparison:
             self.right -= self.left
             self.left = 0
         if not isinstance(self.right, (int, float)):
-            elements, something_left = self.right.pop_elements()
-            self.left -= elements
-            if not something_left:
-                self.right = 0
+            numbers = self.right.pop_numbers()
+            self.left -= self.right
+            self.right = numbers
 
         if self.right < 0:
             self.left = -self.left
@@ -134,11 +133,20 @@ class VarsComparison:
             elif self.comp_type == ">=":
                 self.comp_type = "<"
 
+    def _group_same_expressions(self) -> None:
+        if not isinstance(self.left, (int, float)):
+            self.left.group_same_expressions()
+        if not isinstance(self.right, (int, float)):
+            self.right.group_same_expressions()
+
     def _sort_expressions(self) -> None:
-        pass
+        if not isinstance(self.left, (int, float)):
+            self.left.sort()
+        if not isinstance(self.right, (int, float)):
+            self.right.sort()
 
     def redistribute(self) -> None:
         self._distribute_mult()
         self._move_expressions_numbers()
-        self.left.group_same_expressions()
+        self._group_same_expressions()
         self._sort_expressions()

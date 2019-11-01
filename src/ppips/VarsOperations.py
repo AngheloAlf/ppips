@@ -182,7 +182,9 @@ class AbstractVar(ArithmeticElement):
             return self
         if isinstance(other, VarAdds):
             other = -other
-            return VarAdds(var_list=[self]+other.elements)
+            if isinstance(other, VarAdds):
+                return VarAdds(var_list=[self]+other.elements)
+            return VarAdds(first=self, second=other)
         return super().__sub__(other)
 
 
@@ -219,10 +221,10 @@ class AbstractVar(ArithmeticElement):
     def pop_numbers(self) -> Number:
         return 0
 
-    def pop_elements(self) -> Tuple[AbstractVar, bool]:
-        return self, False
-
     def group_same_expressions(self) -> None:
+        return None
+
+    def sort(self) -> None:
         return None
 
 
@@ -293,11 +295,31 @@ class MultiVar(ArithmeticElement):
 
     def pop_numbers(self) -> Number:
         return 0
-    
-    def pop_elements(self) -> Tuple[MultiVar, bool]:
-        return self, False
 
     def group_same_expressions(self) -> None:
+        return None
+
+    def sort(self) -> None:
+        """Bubble sort based sorting."""
+        for i in range(len(self.elements)):
+            if not isinstance(self.elements[i], (int, float)):
+                self.elements[i].sort()
+
+            for j in range(i):
+                if isinstance(self.elements[i], (int, float)):
+                    expr_a = str(self.elements[i])
+                else:
+                    expr_a = self.elements[i].get_expr()
+                if isinstance(self.elements[j], (int, float)):
+                    expr_b = str(self.elements[j])
+                else:
+                    expr_b = self.elements[j].get_expr()
+
+                if expr_a < expr_b:
+                    aux = self.elements[i]
+                    self.elements[i] = self.elements[j]
+                    self.elements[j] = aux
+
         return None
 
 
@@ -341,6 +363,10 @@ class VarAdds(MultiVar):
 
 
     def __neg__(self) -> ArithmeticElement:
+        if len(self.elements) == 0:
+            return 0
+        if len(self.elements) == 1:
+            return -self.elements[0]
         aux_list = list()
         for i in self.elements:
             aux_list.append(-i)
@@ -368,19 +394,6 @@ class VarAdds(MultiVar):
                 result += j
                 del self.elements[i]
         return result
-
-    def pop_elements(self) -> Tuple[MultiVar, bool]:
-        result = list()
-        for i in range(len(self.elements)-1, -1, -1):
-            j = self.elements[i]
-            if not isinstance(j, (int, float)):
-                result.append(j)
-                del self.elements[i]
-        if len(result) == 0:
-            return 0, True
-        if len(result) == 1:
-            return result[0], True
-        return VarAdds(var_list=result), True
 
     def group_same_expressions(self) -> None:
         k = len(self.elements)
