@@ -153,7 +153,7 @@ class IntProblem:
 
     def remove_redundant_constraints(self) -> None:
         """Tries to remove redundant constraints. Recommended after arc consistency."""
-        # self.constraints.redistribute()
+        self.constraints.redistribute()
         self.constraints.remove_repeated()
 
 

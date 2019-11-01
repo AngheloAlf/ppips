@@ -194,6 +194,9 @@ class AbstractVar(ArithmeticElement):
         if not isinstance(other, AbstractVar):
             return False
         return self.name == other.name
+    
+    def distrubute_mul(self) -> AbstractVar:
+        return self
 
 
 class MultiVar(ArithmeticElement):
@@ -252,10 +255,13 @@ class MultiVar(ArithmeticElement):
             return False
         for i in range(len(self.elements)):
             a = self.elements[i]
-            b = self.elements[i]
+            b = other.elements[i]
             if not are_equals(a, b):
                 return False
         return True
+
+    def distrubute_mul(self) -> MultiVar:
+        return self
 
 
 class VarAdds(MultiVar):
@@ -296,6 +302,18 @@ class VarAdds(MultiVar):
             return VarAdds(var_list=self.elements+[-other])
         return NotImplemented
 
+    def distrubute_mul(self) -> MultiVar:
+        new_elements = list()
+        for i in self.elements:
+            if isinstance(i, VarMult):
+                expr = i.distrubute_mul()
+                if isinstance(expr, VarAdds):
+                    new_elements += expr.elements
+                else:
+                    new_elements.append(expr)
+            else:
+                new_elements.append(i)
+        return VarAdds(var_list=new_elements)
 
 class VarMult(MultiVar):
     def __init__(self, /, var_list:list=None, first=None, second=None) -> None:
@@ -335,6 +353,32 @@ class VarMult(MultiVar):
     def __neg__(self) -> MultType:
         self.elements.insert(0, -1)
         return self
+
+    def distrubute_mul(self) -> MultiVar:
+        mult_elements = list()
+        sums_elements = list()
+        for i in self.elements:
+            if isinstance(i, VarAdds):
+                sums_elements.append(i)
+            else:
+                mult_elements.append(i)
+        if len(sums_elements) == 0:
+            return self
+
+        new_elements = list()
+
+        i = sums_elements[0]
+        i = i.distrubute_mul()
+        del sums_elements[0]
+        
+        first_sum = list()
+        for j in i:
+            first_sum.append(VarMult(var_list=mult_elements+[j]))
+        if len(sums_elements) == 0:
+            return VarAdds(var_list=first_sum)
+        
+        # TODO: implement the mult of sums, ex: (x+y)*(a+b)
+        return VarMult(var_list=first_sum+sums_elements)
 
 
 class VarDiv(MultiVar):

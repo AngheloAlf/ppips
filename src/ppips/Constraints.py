@@ -74,4 +74,5 @@ class Constraints:
     
     def redistribute(self) -> None:
         """Tries to redistribute each constraint, so the equals one looks like each other."""
-        raise NotImplementedError()
+        for i in self.constr:
+            i.redistribute()

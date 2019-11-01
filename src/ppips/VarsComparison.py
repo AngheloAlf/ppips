@@ -101,3 +101,12 @@ class VarsComparison:
             if are_equals(self.left, other.right) and are_equals(self.right, other.left):
                 return True
         return False
+
+    def redistribute(self) -> None:
+        # TODO: 
+        # simple numbers to right and expressions to left
+        # remove expressions like x-x
+        if not isinstance(self.left, (int, float)):
+            self.left = self.left.distrubute_mul()
+        if not isinstance(self.right, (int, float)):
+            self.right = self.right.distrubute_mul()
