@@ -61,3 +61,17 @@ class Constraints:
     def __iter__(self):
         for i in self.constr:
             yield i
+
+    def remove_repeated(self) -> None:
+        """Remove constraints that are exactly the same."""
+        for i in range(len(self.constr)-1, -1, -1):
+            a = self.constr[i]
+            for j in range(i):
+                b = self.constr[j]
+                if a.is_equal(b):
+                    del self.constr[i]
+                    break
+    
+    def redistribute(self) -> None:
+        """Tries to redistribute each constraint, so the equals one looks like each other."""
+        raise NotImplementedError()

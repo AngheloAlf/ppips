@@ -151,6 +151,11 @@ class IntProblem:
                 self.objective.update(self.removed_vars)
             self.node_consistency()
 
+    def remove_redundant_constraints(self) -> None:
+        """Tries to remove redundant constraints. Recommended after arc consistency."""
+        # self.constraints.redistribute()
+        self.constraints.remove_repeated()
+
 
     def generate_graph(self) -> VarsGraph:
         graph: VarsGraph = dict()
@@ -197,13 +202,7 @@ class IntProblem:
             return True, None
         
         new_actual: ElementDict = dict(actual)
-        stay, g_jump = self._recursive_solver(vars_list[1:], solutions, graph, solutions_type, options, new_actual)
-        if solutions_type == "first" and len(solutions) == 1:
-            return False, None
-        if "gbj" in options and options["gbj"] and g_jump is not None:
-            if var.get_var() not in g_jump:
-                var.de_instance()
-                return False, g_jump
+        stay, g_jump = True, None
         while stay:
             new_actual = dict(new_actual)
             stay, g_jump = self._recursive_solver(vars_list[1:], solutions, graph, solutions_type, options, new_actual)

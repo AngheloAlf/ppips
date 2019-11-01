@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import overload, List, Dict, Set, Union, Optional, Collection, Any
 
 from .VarsComparison import VarsComparison
+from .Util import are_equals
 
 # https://docs.python.org/3/reference/datamodel.html
 
@@ -190,6 +191,8 @@ class AbstractVar(ArithmeticElement):
         yield self
     
     def is_equal(self, other: AbstractVar) -> bool:
+        if not isinstance(other, AbstractVar):
+            return False
         return self.name == other.name
 
 
@@ -239,6 +242,20 @@ class MultiVar(ArithmeticElement):
             else:
                 for j in i:
                     yield j
+        
+    def is_equal(self, other):
+        if not isinstance(other, MultiVar):
+            return False
+        if self.simbol != other.simbol:
+            return False
+        if len(self.elements) != len(other.elements):
+            return False
+        for i in range(len(self.elements)):
+            a = self.elements[i]
+            b = self.elements[i]
+            if not are_equals(a, b):
+                return False
+        return True
 
 
 class VarAdds(MultiVar):

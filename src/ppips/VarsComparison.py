@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Union
 
+from .Util import are_equals
+
 class VarsComparison:
     def __init__(self, left, right, comp_type: str) -> None:
         self.left = left
@@ -75,3 +77,27 @@ class VarsComparison:
                         vars.add(r)
         return vars
 
+    def is_equal(self, other: VarsComparison) -> bool:
+        assert isinstance(other, VarsComparison)
+        if self.comp_type == other.comp_type:
+            if are_equals(self.left, other.left) and are_equals(self.right, other.right):
+                return True
+        if self.comp_type == "==" and other.comp_type == "==":
+            if are_equals(self.left, other.right) and are_equals(self.right, other.left):
+                return True
+        if self.comp_type == "!=" and other.comp_type == "!=":
+            if are_equals(self.left, other.right) and are_equals(self.right, other.left):
+                return True
+        if self.comp_type == "<" and other.comp_type == ">":
+            if are_equals(self.left, other.right) and are_equals(self.right, other.left):
+                return True
+        if self.comp_type == ">" and other.comp_type == "<":
+            if are_equals(self.left, other.right) and are_equals(self.right, other.left):
+                return True
+        if self.comp_type == "<=" and other.comp_type == ">=":
+            if are_equals(self.left, other.right) and are_equals(self.right, other.left):
+                return True
+        if self.comp_type == ">=" and other.comp_type == "<=":
+            if are_equals(self.left, other.right) and are_equals(self.right, other.left):
+                return True
+        return False
