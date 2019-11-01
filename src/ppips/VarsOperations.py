@@ -198,6 +198,12 @@ class AbstractVar(ArithmeticElement):
     def distrubute_mul(self) -> AbstractVar:
         return self
 
+    def pop_numbers(self) -> Number:
+        return 0
+
+    def pop_elements(self) -> Tuple[AbstractVar, bool]:
+        return self, False
+
 
 class MultiVar(ArithmeticElement):
     def __init__(self, simbol: str, /, var_list: list=None, first=None, second=None, parenthesis: bool=True) -> None:
@@ -210,6 +216,7 @@ class MultiVar(ArithmeticElement):
         elif var_list is not None:
             if first is not None or second is not None:
                 raise RuntimeError()
+            assert len(var_list) >= 2
             self.elements = list(var_list)
         else:
             raise RuntimeError()
@@ -263,6 +270,12 @@ class MultiVar(ArithmeticElement):
     def distrubute_mul(self) -> MultiVar:
         return self
 
+    def pop_numbers(self) -> Number:
+        return 0
+    
+    def pop_elements(self) -> Tuple[MultiVar, bool]:
+        return self, False
+
 
 class VarAdds(MultiVar):
     def __init__(self, /, var_list:list=None, first=None, second=None) -> None:
@@ -315,6 +328,29 @@ class VarAdds(MultiVar):
                 new_elements.append(i)
         return VarAdds(var_list=new_elements)
 
+    def pop_numbers(self) -> Number:
+        result: Number = 0
+        for i in range(len(self.elements)-1, -1, -1):
+            j = self.elements[i]
+            if isinstance(j, (int, float)):
+                result += j
+                del self.elements[i]
+        return result
+
+    def pop_elements(self) -> Tuple[MultiVar, bool]:
+        result = list()
+        for i in range(len(self.elements)-1, -1, -1):
+            j = self.elements[i]
+            if not isinstance(j, (int, float)):
+                result.append(j)
+                del self.elements[i]
+        if len(result) == 0:
+            return 0, True
+        if len(result) == 1:
+            return result[0], True
+        return VarAdds(var_list=result), True
+
+
 class VarMult(MultiVar):
     def __init__(self, /, var_list:list=None, first=None, second=None) -> None:
         super().__init__("*", var_list=var_list, first=first, second=second, parenthesis=False)
@@ -351,7 +387,10 @@ class VarMult(MultiVar):
 
 
     def __neg__(self) -> MultType:
-        self.elements.insert(0, -1)
+        if -1 in self.elements:
+            self.elements.remove(-1)
+        else:
+            self.elements.insert(0, -1)
         return self
 
     def distrubute_mul(self) -> MultiVar:

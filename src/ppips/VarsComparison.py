@@ -102,11 +102,31 @@ class VarsComparison:
                 return True
         return False
 
-    def redistribute(self) -> None:
-        # TODO: 
-        # simple numbers to right and expressions to left
-        # remove expressions like x-x
+    def _distribute_mult(self) -> None:
+        # distribute multipications
         if not isinstance(self.left, (int, float)):
             self.left = self.left.distrubute_mul()
         if not isinstance(self.right, (int, float)):
             self.right = self.right.distrubute_mul()
+
+    def _move_expressions_numbers(self) -> None:
+        # simple numbers to right and expressions to left
+        if not isinstance(self.left, (int, float)):
+            self.right -= self.left.pop_numbers()
+        else:
+            self.right -= self.left
+            self.left = 0
+        if not isinstance(self.right, (int, float)):
+            elements, something_left = self.right.pop_elements()
+            self.left -= elements
+            if not something_left:
+                self.right = 0
+
+    def _susbract_same_expressions(self):
+        # remove expressions like x-x
+        pass
+
+    def redistribute(self) -> None:
+        self._distribute_mult()
+        self._move_expressions_numbers()
+        self._susbract_same_expressions()
