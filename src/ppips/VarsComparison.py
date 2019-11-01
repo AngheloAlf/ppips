@@ -122,11 +122,11 @@ class VarsComparison:
             if not something_left:
                 self.right = 0
 
-    def _susbract_same_expressions(self):
-        # remove expressions like x-x
+    def _sort_expressions(self) -> None:
         pass
 
     def redistribute(self) -> None:
         self._distribute_mult()
         self._move_expressions_numbers()
-        self._susbract_same_expressions()
+        self.left.group_same_expressions()
+        self._sort_expressions()

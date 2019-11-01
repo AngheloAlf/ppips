@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import overload, List, Dict, Set, Union, Optional, Collection, Any
+from typing import overload, List, Tuple, Dict, Set, Union, Optional, Collection, Any
 
 from .VarsComparison import VarsComparison
 from .Util import are_equals
@@ -204,6 +204,9 @@ class AbstractVar(ArithmeticElement):
     def pop_elements(self) -> Tuple[AbstractVar, bool]:
         return self, False
 
+    def group_same_expressions(self) -> None:
+        return None
+
 
 class MultiVar(ArithmeticElement):
     def __init__(self, simbol: str, /, var_list: list=None, first=None, second=None, parenthesis: bool=True) -> None:
@@ -275,6 +278,9 @@ class MultiVar(ArithmeticElement):
     
     def pop_elements(self) -> Tuple[MultiVar, bool]:
         return self, False
+
+    def group_same_expressions(self) -> None:
+        return None
 
 
 class VarAdds(MultiVar):
@@ -350,6 +356,29 @@ class VarAdds(MultiVar):
             return result[0], True
         return VarAdds(var_list=result), True
 
+    def group_same_expressions(self) -> None:
+        k = len(self.elements)
+        while k >= 0:
+            found = False
+            i = len(self.elements)-1
+            while i > -1 and not found:
+                a = self.elements[i]
+                j = 0
+                while j < i and not found:
+                    b = self.elements[j]
+                    if are_equals(a, -b):
+                        del self.elements[i]
+                        del self.elements[j]
+                        found = True
+                    if are_equals(a, b):
+                        del self.elements[i]
+                        self.elements[j] = 2*self.elements[j]
+                        found = True
+                    j += 1
+                i += -1
+            k -= 1
+        return None
+
 
 class VarMult(MultiVar):
     def __init__(self, /, var_list:list=None, first=None, second=None) -> None:
@@ -388,10 +417,13 @@ class VarMult(MultiVar):
 
     def __neg__(self) -> MultType:
         if -1 in self.elements:
-            self.elements.remove(-1)
+            aux_list = list(self.elements)
+            aux_list.remove(-1)
+            if len(aux_list) == 1:
+                return aux_list[0]
+            return VarMult(var_list=aux_list)
         else:
-            self.elements.insert(0, -1)
-        return self
+            return VarMult(var_list=[-1]+self.elements)
 
     def distrubute_mul(self) -> MultiVar:
         mult_elements = list()
