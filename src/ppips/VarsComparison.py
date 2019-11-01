@@ -122,6 +122,18 @@ class VarsComparison:
             if not something_left:
                 self.right = 0
 
+        if self.right < 0:
+            self.left = -self.left
+            self.right = -self.right
+            if self.comp_type == "<":
+                self.comp_type = ">"
+            elif self.comp_type == "<=":
+                self.comp_type = ">="
+            elif self.comp_type == ">":
+                self.comp_type = "<"
+            elif self.comp_type == ">=":
+                self.comp_type = "<"
+
     def _sort_expressions(self) -> None:
         pass
 
